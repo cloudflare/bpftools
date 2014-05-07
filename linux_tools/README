@@ -1,0 +1,5 @@
+Linux net tools copied from linux/tools/net. Code on GPLv2 license.
+
+Original source:
+
+    https://github.com/torvalds/linux/tree/master/tools/net
