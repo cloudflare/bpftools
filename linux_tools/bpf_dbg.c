@@ -970,7 +970,7 @@ static int try_load_pcap(const char *file)
 	}
 
 	pcap_ptr_va_start = mmap(NULL, pcap_map_size, PROT_READ,
-				 MAP_SHARED | MAP_LOCKED, pcap_fd, 0);
+				 MAP_SHARED, pcap_fd, 0);
 	if (pcap_ptr_va_start == MAP_FAILED) {
 		rl_printf("mmap of file failed!");
 		return CMD_ERR;
