@@ -10,7 +10,7 @@ import pcappy
 
 def usage():
     print """
-pcap2hex.py [ OPTIONS ] [ file... ]
+pcap2hex.py [ OPTIONS ] [ pcap file... ]
 
 Read pcap from stdin or given pcap files and print hex-encoded
 packets. Additionally pcap2hex can normalize DLT_LINUX_SLL l2 header
@@ -88,6 +88,8 @@ def main():
                              for c in data])
 
                 print "%s\t%s" % (h, s)
+
+    sys.stdout.flush()
 
 
 def _looks_like_ip(l2, off):

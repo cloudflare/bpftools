@@ -10,7 +10,7 @@ import sys
 
 def usage():
     print """
-filter.py [ OPTIONS ] [ file... ]
+filter.py [ OPTIONS ] [ pcap file... ]
 
 Read pcap data from stdin or given files, run it through a BPF filter
 and write matching packets to stdout as pcap.
@@ -60,7 +60,6 @@ def main():
     except getopt.GetoptError as err:
         print str(err)
         usage()
-    readfnames = []
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -72,8 +71,6 @@ def main():
             bpf = bpf_from_bytecode(a)
         else:
             assert False, "unhandled option"
-
-    readfnames += args[0:]
 
     if not args:
         readfds = [sys.stdin]
@@ -98,6 +95,7 @@ def main():
             hdr, data = r
             dump.write(hdr, data)
 
+    sys.stdout.flush()
     dump.flush()
 
 

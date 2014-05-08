@@ -8,7 +8,7 @@ import sys
 
 def usage():
     print """
-hex2pcap.py [ OPTIONS ] [ file... ]
+hex2pcap.py [ OPTIONS ] [ hex file... ]
 
 Read hex packets from stdin or given files and print a pcap file to
 stdout. Input lines starting with hash or semicolon are ignored, only
@@ -55,6 +55,7 @@ def main():
             hdr['caplen'] = hdr['len'] = len(raw)
             dump.write(hdr, raw)
 
+    sys.stdout.flush()
     dump.flush()
 
 
