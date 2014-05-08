@@ -5,8 +5,8 @@ import itertools
 import os
 import pcappy
 import pcappy.types
+import subprocess
 import sys
-
 
 def usage():
     print """
@@ -16,9 +16,10 @@ Read pcap data from stdin or given files, run it through a BPF filter
 and write matching packets to stdout as pcap.
 
 Options are:
-  -h, --help         print this message
-  -b, --bytecode     filter with given BPF bytecode
-  -e, --expr         fitler with given BPF expression
+  -h, --help          print this message
+  -b, --bytecode      filter with given BPF bytecode
+  -e, --expr          fitler with given BPF expression
+  -c, --compile FILE  compile given bpf file and use as filter
 
 For example to select only IP packets you can use:
 
@@ -51,12 +52,37 @@ def bpf_from_expr(expr):
                                    linktype=pcappy.LINKTYPE_ETHERNET,
                                    snaplen=65536)
 
+
+def find_binary(prefixes, name, args):
+    for prefix in prefixes:
+        try:
+            subprocess.call([os.path.join(prefix, name)] + args)
+        except OSError, e:
+            continue
+        return prefix
+    print >> sys.stderr, prefix, "%r tool not found in your PATH" % (name,)
+    os._exit(-2)
+
+
+def bpf_compile(bpf_fname):
+    prefixes = [".", "linux_tools", os.path.dirname(sys.argv[0]),
+                os.path.realpath(os.path.dirname(sys.argv[0]))]
+    prefix = find_binary(prefixes, "bpf_asm", ['/dev/null'])
+
+    out, err = subprocess.Popen([os.path.join(prefix, "bpf_asm"), bpf_fname],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+
+    if set(out) - set(" ,0123456789\n") or not out:
+        print >> sys.stderr, "Compiling %r failed with:\n%s\n" % (bpf_fname, out.strip() + err.strip())
+        os._exit(-3)
+    return out.strip()
+
 def main():
     bpf = None
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "he:b:",
-                                   ["help", "expr=", "bytecode="])
+        opts, args = getopt.getopt(sys.argv[1:], "he:b:c:",
+                                   ["help", "expr=", "bytecode=", "compile="])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -69,6 +95,9 @@ def main():
             bpf = bpf_from_expr(a)
         elif o in ("-b", "--bytecode"):
             bpf = bpf_from_bytecode(a)
+        elif o in ("-c", "--compile"):
+            _ = open(a, 'rb') # check if can open
+            bpf = bpf_from_bytecode(bpf_compile(a))
         else:
             assert False, "unhandled option"
 
