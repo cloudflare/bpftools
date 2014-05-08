@@ -1,0 +1,5 @@
+*.o
+*.yacc.[ch]
+linux_tools/bpf_asm
+linux_tools/bpf_dbg
+linux_tools/bpf_jit_disasm
