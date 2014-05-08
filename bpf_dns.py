@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import getopt
-import itertools
 import sys
 import struct
 import StringIO as stringio
@@ -54,6 +53,7 @@ Options are:
   -n, --negate       capture packets that don't match given domains
   -i, --ignore-case  make the rule case insensitive. use with care.
   -s, --assembly     print BPF assembly instead of byte code
+  -o, --offset       ofset of l3 (IP) header, 14 by default
 """.lstrip()
     sys.exit(2)
 
@@ -61,9 +61,12 @@ Options are:
 def main():
     ignorecase = negate = assembly = False
 
+    l3_off = 14
+
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hins",
-                                   ["help", "ignore-case", "negate", "assembly"])
+                                   ["help", "ignore-case", "negate",
+                                    "assembly", "offset"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -78,6 +81,8 @@ def main():
             negate = True
         elif o in ("-s", "--assembly"):
             assembly = True
+        elif o in ("-o", "--offset"):
+            l3_off = int(a)
         else:
             assert False, "unhandled option"
 
@@ -149,9 +154,9 @@ def main():
         print "    add #1"
         print "    tax"
 
-    print "    ldx 4*([14]&0xf)"
+    print "    ldx 4*([%i]&0xf)" % (l3_off,)
     print "    txa"
-    print "    add #34"
+    print "    add #%i" % (l3_off + 8 + 12) # 8B of udp + 12B of dns header
     print "    ; M[0] = offset of first dns query byte"
     print "    st M[0]"
     print
