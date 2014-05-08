@@ -3,6 +3,8 @@
 import struct
 import sys
 
+import utils
+
 
 def usage():
     print """
@@ -49,7 +51,7 @@ def unpack_domain(off, l5, rr=False):
 
 def parsedns(raw):
 
-    l2len = find_ip_offset(raw)
+    l2len = utils.find_ip_offset(raw)
     l2, l3 = raw[:l2len], raw[l2len:]
     v_len, = struct.unpack_from('!B', l3)
     l3len = (v_len & 0x0F) * 4
@@ -104,34 +106,6 @@ def parsedns(raw):
 
     if len(l5) > off:
         print '  trailing: %s' % (l5[off:].encode('hex'),)
-
-
-def _looks_like_ip(l2, off):
-    ipver, _, total_length = struct.unpack_from('!BBH', l2, off)
-    if (ipver & 0xF0 == 0x40 and (ipver & 0x0f) >= 5
-        and total_length + off == len(l2)):
-        return 4
-
-    vertos, _, _,  pay_len, proto, ttl = struct.unpack_from('!BBHHBB', l2, off)
-    if (vertos & 0xF0 == 0x60 and pay_len + off + 40 == len(l2)
-        and ttl > 0):
-        return 6
-    return None
-
-def find_ip_offset(l2, max_off=40):
-    # first look for both ethernet and ip header
-    for off in xrange(2, max_off+2, 2):
-        if l2[off-2:off] == '\x08\x00' and _looks_like_ip(l2, off) == 4:
-            return off
-        if l2[off-2:off] == '\x86\xdd' and _looks_like_ip(l2, off) == 6:
-            return off
-
-    # okay, just look for ip header
-    for off in xrange(0, max_off, 2):
-        if _looks_like_ip(l2, off):
-            return off
-
-    raise Exception("can't find an IP header")
 
 
 if __name__ == "__main__":

@@ -7,6 +7,8 @@ import string
 import struct
 import pcappy
 
+import utils
+
 
 def usage():
     print """
@@ -27,6 +29,7 @@ Options are:
   -a, --ascii        print printable asci characters
 """.lstrip()
     sys.exit(2)
+
 
 def main():
     scrub = ascii = False
@@ -71,7 +74,7 @@ def main():
             hdr, data = r
 
             if off is None:
-                off = find_ip_offset(data)
+                off = utils.find_ip_offset(data)
 
             if scrub:
                 data = do_scrub(data, off)
@@ -90,34 +93,6 @@ def main():
                 print "%s\t%s" % (h, s)
 
     sys.stdout.flush()
-
-
-def _looks_like_ip(l2, off):
-    ipver, _, total_length = struct.unpack_from('!BBH', l2, off)
-    if (ipver & 0xF0 == 0x40 and (ipver & 0x0f) >= 5
-        and total_length + off == len(l2)):
-        return 4
-
-    vertos, _, _,  pay_len, proto, ttl = struct.unpack_from('!BBHHBB', l2, off)
-    if (vertos & 0xF0 == 0x60 and pay_len + off + 40 == len(l2)
-        and ttl > 0):
-        return 6
-    return None
-
-def find_ip_offset(l2, max_off=40):
-    # first look for both ethernet and ip header
-    for off in xrange(2, max_off+2, 2):
-        if l2[off-2:off] == '\x08\x00' and _looks_like_ip(l2, off) == 4:
-            return off
-        if l2[off-2:off] == '\x86\xdd' and _looks_like_ip(l2, off) == 6:
-            return off
-
-    # okay, just look for ip header
-    for off in xrange(0, max_off, 2):
-        if _looks_like_ip(l2, off):
-            return off
-
-    raise Exception("can't find an IP header")
 
 
 def do_scrub(l2, off):

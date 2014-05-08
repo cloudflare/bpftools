@@ -58,18 +58,6 @@ Options are:
     sys.exit(2)
 
 
-def find_binary(prefixes, name, args):
-    for prefix in prefixes:
-        try:
-            subprocess.call([os.path.join(prefix, name)] + args)
-        except OSError, e:
-            continue
-        return prefix
-    print >> sys.stderr, prefix, "%r tool not found in your PATH" % (name,)
-    os._exit(-2)
-
-
-
 def main():
     ignorecase = negate = assembly = False
 
