@@ -102,15 +102,16 @@ def _looks_like_ip(l2, off):
         return 6
     return None
 
-def find_ip_offset(l2):
-    # first try matching ethernet frame
-    for off in xrange(2, 42, 2):
+def find_ip_offset(l2, max_off=40):
+    # first look for both ethernet and ip header
+    for off in xrange(2, max_off+2, 2):
         if l2[off-2:off] == '\x08\x00' and _looks_like_ip(l2, off) == 4:
             return off
         if l2[off-2:off] == '\x86\xdd' and _looks_like_ip(l2, off) == 6:
             return off
 
-    for off in xrange(0, 40, 2):
+    # okay, just look for ip header
+    for off in xrange(0, max_off, 2):
         if _looks_like_ip(l2, off):
             return off
 
@@ -133,6 +134,7 @@ def do_scrub(l2, off):
     else:
         assert False, "neither ipv4 or 6"
     return ''.join(data)
+
 
 if __name__ == "__main__":
     try:
