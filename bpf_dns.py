@@ -4,6 +4,9 @@ import getopt
 import itertools
 import sys
 import struct
+import StringIO as stringio
+
+import utils
 
 
 def usage():
@@ -50,16 +53,29 @@ Options are:
   -h, --help         print this message
   -n, --negate       capture packets that don't match given domains
   -i, --ignore-case  make the rule case insensitive. use with care.
+  -s, --assembly     print BPF assembly instead of byte code
 """.lstrip()
     sys.exit(2)
+
+
+def find_binary(prefixes, name, args):
+    for prefix in prefixes:
+        try:
+            subprocess.call([os.path.join(prefix, name)] + args)
+        except OSError, e:
+            continue
+        return prefix
+    print >> sys.stderr, prefix, "%r tool not found in your PATH" % (name,)
+    os._exit(-2)
+
 
 
 def main():
     ignorecase = negate = assembly = False
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hin",
-                                   ["help", "ignore-case", "negate"])
+        opts, args = getopt.getopt(sys.argv[1:], "hins",
+                                   ["help", "ignore-case", "negate", "assembly"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -72,11 +88,18 @@ def main():
             ignorecase = True
         elif o in ("-n", "--negate"):
             negate = True
+        elif o in ("-s", "--assembly"):
+            assembly = True
         else:
             assert False, "unhandled option"
 
     if not args:
-        assert False, "A parameter required."
+        print >> sys.stderr, "At least one domain name required."
+        sys.exit(-1)
+
+    if not assembly:
+        sys.stdout, saved_stdout = stringio.StringIO(), sys.stdout
+
 
     list_of_rules = []
 
@@ -96,7 +119,7 @@ def main():
 
         list_of_rules.append( list(merge(rule)) )
 
-    def match(s, label):
+    def match_exact(s, label):
         print "    ; %r" % s
         off = 0
         while s:
@@ -131,6 +154,12 @@ def main():
         print "    add #%i" % (off,)
         print "    tax"
 
+    def match_star():
+        print "    ; Match: *"
+        print "    ldb [x + 0]"
+        print "    add x"
+        print "    add #1"
+        print "    tax"
 
     print "    ldx 4*([14]&0xf)"
     print "    txa"
@@ -145,18 +174,23 @@ def main():
         print "    ldx M[0]"
         for x in rules:
             if x != '*':
-                match(x, 'lb_%i' % (i+1,))
+                match_exact(x, 'lb_%i' % (i+1,))
             else:
-                print "    ; Match: *"
-                print "    ldb [x + 0]"
-                print "    add x"
-                print "    add #1"
-                print "    tax"
+                match_star()
         print "    ret #%i" % (1 if not negate else 0)
         print
 
     print "lb_%i:" % (i+1,)
     print "    ret #%i" % (0 if not negate else 1)
+
+
+    sys.stdout.flush()
+
+    if not assembly:
+        assembly = sys.stdout.seek(0)
+        assembly = sys.stdout.read()
+        sys.stdout = saved_stdout
+        print utils.bpf_compile(assembly)
 
 
 # Accepts list of tuples [(mergeable, value)] and merges fields where
