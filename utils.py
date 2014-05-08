@@ -2,6 +2,7 @@
 import itertools
 import os
 import subprocess
+import struct
 import sys
 
 
