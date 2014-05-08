@@ -27,3 +27,14 @@ def bpf_compile(assembly):
         print >> sys.stderr, "Compiling failed with:\n%s\n" % (out.strip() + err.strip())
         os._exit(-3)
     return out.strip()
+
+
+# Accepts list of tuples [(mergeable, value)] and merges fields where
+# mergeable is True.
+def merge(iterable, merge=lambda a,b:a+b):
+    for k, g in itertools.groupby(iterable, key=lambda a:a[0]):
+        if k is True:
+            yield reduce(merge, (i[1] for i in g))
+        else:
+            for i in g:
+                yield i[1]

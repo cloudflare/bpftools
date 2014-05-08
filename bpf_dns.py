@@ -117,7 +117,7 @@ def main():
             else:
                 rule.append( (True, chr(len(part)) + part) )
 
-        list_of_rules.append( list(merge(rule)) )
+        list_of_rules.append( list(utils.merge(rule)) )
 
     def match_exact(s, label):
         print "    ; %r" % s
@@ -191,17 +191,6 @@ def main():
         assembly = sys.stdout.read()
         sys.stdout = saved_stdout
         print utils.bpf_compile(assembly)
-
-
-# Accepts list of tuples [(mergeable, value)] and merges fields where
-# mergeable is True.
-def merge(iterable, merge=lambda a,b:a+b):
-    for k, g in itertools.groupby(iterable, key=lambda a:a[0]):
-        if k is True:
-            yield reduce(merge, (i[1] for i in g))
-        else:
-            for i in g:
-                yield i[1]
 
 
 if __name__ == "__main__":
