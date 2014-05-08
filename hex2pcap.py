@@ -39,7 +39,6 @@ def main():
         readfds = [open(fname, 'rb') for fname in args]
 
     dump = pcappy.PcapPyDead(snaplen=65536).dump_open(sys.stdout)
-
     hdr = {'ts':{'tv_sec':0, 'tv_usec':0}}
 
     for fd in readfds:
@@ -65,8 +64,7 @@ if __name__ == "__main__":
     except IOError, e:
         if e.errno == 32:
             os._exit(-1)
-        else:
-            raise e
+        raise
     except KeyboardInterrupt:
         os._exit(-1)
 

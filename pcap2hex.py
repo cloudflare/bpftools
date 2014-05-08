@@ -119,8 +119,7 @@ if __name__ == "__main__":
     except IOError, e:
         if e.errno == 32:
             os._exit(-1)
-        else:
-            raise e
+        raise
     except KeyboardInterrupt:
         os._exit(-1)
 
