@@ -155,9 +155,9 @@ def main():
         print "    add #1"
         print "    tax"
 
+    print "    ld #%i" % (l3_off + 8 + 12) # 8B of udp + 12B of dns header
     print "    ldx 4*([%i]&0xf)" % (l3_off,)
-    print "    txa"
-    print "    add #%i" % (l3_off + 8 + 12) # 8B of udp + 12B of dns header
+    print "    add x"
     print "    tax"
     print "    ; x = M[0] = offset of first dns query byte"
     print "    %sst M[0]" % ('' if len(list_of_rules) > 1 else '; ',)
