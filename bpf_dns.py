@@ -64,9 +64,9 @@ def main():
     l3_off = 14
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hins",
+        opts, args = getopt.getopt(sys.argv[1:], "hinso:",
                                    ["help", "ignore-case", "negate",
-                                    "assembly", "offset"])
+                                    "assembly", "offset="])
     except getopt.GetoptError as err:
         print str(err)
         usage()
