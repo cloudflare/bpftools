@@ -112,8 +112,8 @@ def main():
 
         list_of_rules.append( list(utils.merge(rule)) )
 
-    def match_exact(s, label):
-        print "    ; %r" % s
+    def match_exact(s, label, last=False):
+        print "    ; Match: %s %r" % (s.encode('hex'), s)
         off = 0
         while s:
             if len(s) >= 4:
@@ -143,9 +143,10 @@ def main():
                     m |= 0x20
                 print "    jneq #0x%02x, %s" % (m, label,)
                 off += 1
-        print "    txa"
-        print "    add #%i" % (off,)
-        print "    tax"
+        if not last:
+            print "    txa"
+            print "    add #%i" % (off,)
+            print "    tax"
 
     def match_star():
         print "    ; Match: *"
@@ -157,17 +158,19 @@ def main():
     print "    ldx 4*([%i]&0xf)" % (l3_off,)
     print "    txa"
     print "    add #%i" % (l3_off + 8 + 12) # 8B of udp + 12B of dns header
-    print "    ; M[0] = offset of first dns query byte"
-    print "    st M[0]"
+    print "    tax"
+    print "    ; x = M[0] = offset of first dns query byte"
+    print "    %sst M[0]" % ('' if len(list_of_rules) > 1 else '; ',)
     print
 
     for i, rules in enumerate(list_of_rules):
         print "lb_%i:" % (i,)
         print "    ; %r" % (rules,)
-        print "    ldx M[0]"
-        for x in rules:
-            if x != '*':
-                match_exact(x, 'lb_%i' % (i+1,))
+        print "    %sldx M[0]" % ('' if i != 0 else '; ')
+        for j, rule in enumerate(rules):
+            last = (j == len(rules)-1)
+            if rule != '*':
+                match_exact(rule, 'lb_%i' % (i+1,), last)
             else:
                 match_star()
         print "    ret #%i" % (1 if not negate else 0)
