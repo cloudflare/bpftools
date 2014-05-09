@@ -87,6 +87,9 @@ def main():
 
     sys.stdout.flush()
 
+    # normal exit crashes due to a double free error in pcappy
+    os._exit(0)
+
 
 if __name__ == "__main__":
     try:
@@ -97,6 +100,3 @@ if __name__ == "__main__":
         raise
     except KeyboardInterrupt:
         os._exit(-1)
-
-    # normal exit crashes due to a double free error in pcappy
-    os._exit(0)

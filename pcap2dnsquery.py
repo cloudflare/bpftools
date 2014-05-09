@@ -76,6 +76,9 @@ def main():
     ignoredcount += 1
     print >>sys.stderr, "invalid: %i" % (ignoredcount,)
 
+    # normal exit crashes due to a double free error in pcappy
+    os._exit(0)
+
 
 def find_dns_offset(data, off):
     ipv, = struct.unpack_from('!B', data, off)
@@ -108,6 +111,3 @@ if __name__ == "__main__":
         raise
     except KeyboardInterrupt:
         os._exit(-1)
-
-    # normal exit crashes due to a double free error in pcappy
-    os._exit(0)

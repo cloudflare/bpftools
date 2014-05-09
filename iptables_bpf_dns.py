@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 template = r'''
 #!/bin/bash
 #
@@ -120,5 +119,6 @@ with open(fname, 'wb') as f:
             'assembly': '#    ' + '\n#    '.join(assembly.split('\n')),
             'name': name,
             })
+
 os.chmod(fname, 0750)
 print "Generated file %s" % (fname,)
