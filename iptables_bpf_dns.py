@@ -107,7 +107,7 @@ if True:
                 parts.append( ''.join(c if c in string.printable and c not in string.whitespace else 'x'
                                       for c in part) )
         name_parts.append( '_'.join(parts) )
-name = 'dns_' + '_'.join(name_parts)
+name = 'bpf_dns_' + '_'.join(name_parts)
 
 
 
