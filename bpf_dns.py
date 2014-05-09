@@ -108,39 +108,47 @@ def main():
             if part == '*':
                 rule.append( (False, '*') )
             else:
-                rule.append( (True, chr(len(part)) + part) )
+                rule.append( (True, [(False, chr(len(part)))] \
+                                  + [(True, c) for c in part]) )
 
         list_of_rules.append( list(utils.merge(rule)) )
 
-    def match_exact(s, label, last=False):
-        print "    ; Match: %s %r" % (s.encode('hex'), s)
+    def match_exact(rule, label, last=False):
+        mask, s = ''.join(map(lambda (a,b): '\x20' if a else '\x00' , rule)), ''.join(map(lambda (a,b): b, rule))
+        print "    ; Match: %s %r  mask=%s" % (s.encode('hex'), s, mask.encode('hex'))
         off = 0
         while s:
             if len(s) >= 4:
                 m, s = s[:4], s[4:]
+                mm, mask = mask[:4], mask[4:]
                 m, = struct.unpack('!I', m)
+                mm, = struct.unpack('!I', mm)
                 print "    ld [x + %i]" % off
-                if ignorecase:
-                    print "    or #0x20202020"
-                    m |= 0x20202020
+                if ignorecase and mm:
+                    print "    or #0x%08x" % mm
+                    m |= mm
                 print "    jneq #0x%08x, %s" % (m, label,)
                 off += 4
             elif len(s) >= 2:
                 m, s = s[:2], s[2:]
+                mm, mask = mask[:2], mask[2:]
                 m, = struct.unpack('!H', m)
+                mm, = struct.unpack('!H', mm)
                 print "    ldh [x + %i]" % off
-                if ignorecase:
-                    print "    or #0x2020"
-                    m |= 0x2020
+                if ignorecase and mm:
+                    print "    or #0x%04x" % mm
+                    m |= mm
                 print "    jneq #0x%04x, %s" % (m, label,)
                 off += 2
             else:
                 m, s = s[:1], s[1:]
                 m, = struct.unpack('!B', m)
+                mm, mask = mask[:1], mask[1:]
+                mm, = struct.unpack('!B', mm)
                 print "    ldb [x + %i]" % off
-                if ignorecase:
-                    print "    or #0x20"
-                    m |= 0x20
+                if ignorecase and mm:
+                    print "    or #0x%02x" % mm
+                    m |= mm
                 print "    jneq #0x%02x, %s" % (m, label,)
                 off += 1
         if not last:
