@@ -9,11 +9,11 @@ import utils
 
 
 def usage():
-    print """
+    print r"""
 bpf_dns.py [ OPTIONS ] [ domain... ]
 
 This tool creates a raw Berkeley Packet Filter (BPF) rule that will
-match packets which are DNS queries against listed domains. For
+match IPv4 packets which are DNS queries against listed domains. For
 example:
 
   bpf.py example.com

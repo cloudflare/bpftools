@@ -11,7 +11,7 @@ import utils
 
 
 def usage():
-    print """
+    print r"""
 filter.py [ OPTIONS ] [ pcap file... ]
 
 Read pcap data from stdin or given files, run it through a BPF filter
