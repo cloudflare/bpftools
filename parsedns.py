@@ -53,27 +53,43 @@ def parsedns(raw):
 
     l2len = utils.find_ip_offset(raw)
     l2, l3 = raw[:l2len], raw[l2len:]
-    v_len, = struct.unpack_from('!B', l3)
-    l3len = (v_len & 0x0F) * 4
-
-    l3, l4 = l3[:l3len], l3[l3len:]
-    l4, l5 = l4[:8], l4[8:]
-
 
     print '[.] l2: %s' % l2.encode('hex')
-    print '[.] l3: %s' % l3.encode('hex')
-    v_len, dscp_ecn, total_length, ip_id, fragment, ttl, protocol, _checksum, sip, dip = struct.unpack_from('!BBHHHBBHII', l3)
-    ip_extra = l3[20:]
 
-    print '              ver: 0x%02x' % ((v_len & 0xf0) >> 4,)
-    print '              hdl: 0x%02x' % ((v_len & 0x0f),)
-    print '            ip_id: 0x%04x' % (ip_id,)
-    print '         fragment: 0x%04x' % (fragment,)
-    print '         protocol: 0x%02x' % (protocol,)
-    print '           source: 0x%04x' % (sip,)
-    print '      destination: 0x%04x' % (dip,)
-    if ip_extra:
-        print '         ip_extra: %s' % (ip_extra.encode('hex'),)
+    v_len, = struct.unpack_from('!B', l3)
+    if v_len & 0xf0 == 0x40:
+        l3len = (v_len & 0x0F) * 4
+        l3, l4 = l3[:l3len], l3[l3len:]
+        print '[.] l3: %s' % l3.encode('hex')
+
+        v_len, dscp_ecn, total_length, ip_id, fragment, ttl, protocol, _checksum, sip, dip = struct.unpack_from('!BBHHHBBHII', l3)
+        ip_extra = l3[20:]
+
+        print '              ver: 0x%02x' % ((v_len & 0xf0) >> 4,)
+        print '              hdl: 0x%02x' % ((v_len & 0x0f),)
+        print '            ip_id: 0x%04x' % (ip_id,)
+        print '         fragment: 0x%04x' % (fragment,)
+        print '         protocol: 0x%02x' % (protocol,)
+        print '           source: 0x%04x' % (sip,)
+        print '      destination: 0x%04x' % (dip,)
+        if ip_extra:
+            print '         ip_extra: %s' % (ip_extra.encode('hex'),)
+    elif v_len & 0xf0 == 0x60:
+        l3len = 40
+        l3, l4 = l3[:l3len], l3[l3len:]
+        print '[.] l3: %s' % l3.encode('hex')
+
+        v_ttl, _class, _flow, payload_length, next_header, ttl = struct.unpack_from('!BBHHBB', l3)
+        print '              ver: 0x%02x' % ((v_len & 0xf0) >> 4,)
+        print '   payload_length: 0x%04x' % (payload_length,)
+        print '      next_header: 0x%02x' % (next_header,)
+        print '              ttl: 0x%02x' % (ttl,)
+        print '           source: %s' % (l3[8:24].encode('hex'),)
+        print '      destination: %s' % (l3[24:40].encode('hex'),)
+    else:
+        assert False
+
+    l4, l5 = l4[:8], l4[8:]
 
     print '[.] l4: %s' % l4.encode('hex')
 
