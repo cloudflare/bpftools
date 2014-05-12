@@ -10,14 +10,18 @@ template = r'''
 #
 #     %(bpf_cmd)s
 #
-# To apply the iptables BPF rule against listed destination IP's run:
+# To apply the iptables BPF rule against listed destination IP's run
+# this script with the flooded IP addresses as parameters:
 #
 #    ./%(fname)s %(sampleips)s
 #
-# With the ip addresses of flooded name servers - destination IP of
-# the packets.
+# This script creates an ipset "%(ipsetname)s". You can manage it
+# manually:
 #
-# To clean the iptables rule:
+#     ipset add $(ipsetname)s %(sampleips)s
+#
+#
+# To clean the iptables rule and ipset run:
 #
 #    ./%(fname)s --delete
 #
