@@ -13,7 +13,7 @@ template = r'''
 #
 # To apply the iptables bpf rule run:
 #
-#    ./%(name)s 1.1.1.1 2.2.2.2
+#    ./%(name)s 1.1.1.1/32 2.2.2.2/32
 #
 # With the ip addresses of flooded name servers - destination IP of
 # the packets.
@@ -58,7 +58,7 @@ if [ "$*" == "--delete" ]; then
 
 else
 
-    ${IPSET} -exist create %(name)s hash:ip
+    ${IPSET} -exist create %(name)s hash:net
     while [ "$*" != "" ]; do
         ${IPSET} -exist add %(name)s "$1"
         shift
