@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
-#include <linux/filter.h>
+#include "linux/filter.h"
 
 #include "bpf_exp.yacc.h"
 

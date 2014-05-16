@@ -12,11 +12,11 @@ YACC = bison
 
 all : bpf_jit_disasm bpf_dbg bpf_asm
 
-bpf_jit_disasm : CFLAGS = -Wall -O2 -DPACKAGE='bpf_jit_disasm'
+bpf_jit_disasm : CFLAGS = -Wall -O2 -DPACKAGE='bpf_jit_disasm' -I.
 bpf_jit_disasm : LDLIBS = -lopcodes -lbfd -ldl
 bpf_jit_disasm : bpf_jit_disasm.o
 
-bpf_dbg : CFLAGS = -Wall -O2
+bpf_dbg : CFLAGS = -Wall -O2 -I.
 bpf_dbg : LDLIBS = -lreadline
 bpf_dbg : bpf_dbg.o
 
