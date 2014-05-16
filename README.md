@@ -11,6 +11,10 @@ To run these scripts you will need:
  - sudo easy-install pcappy
  - sudo apt-get install binutils-dev libreadline-dev python-scapy
 
+To build:
+
+    $ make
+
 
 iptables_bpf.py
 ===============
