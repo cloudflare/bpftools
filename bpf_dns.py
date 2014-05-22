@@ -53,7 +53,7 @@ Options are:
   -n, --negate       capture packets that don't match given domains
   -i, --ignore-case  make the rule case insensitive. use with care.
   -s, --assembly     print BPF assembly instead of byte code
-  -o, --offset       ofset of l3 (IP) header, 14 by default
+  -o, --offset       offset of l3 (IP) header, 14 by default
   -6, --inet6        rule should match IPv6, not IPv4 packets
 """.lstrip()
     sys.exit(2)
@@ -181,7 +181,7 @@ def main():
 
     for i, rules in enumerate(list_of_rules):
         print "lb_%i:" % (i,)
-        print "    ; %r" % (rules,)
+        #print "    ; %r" % (rules,)
         print "    %sldx M[0]" % ('' if i != 0 else '; ')
         for j, rule in enumerate(rules):
             last = (j == len(rules)-1)

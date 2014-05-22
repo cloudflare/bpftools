@@ -18,7 +18,7 @@ template = r'''
 # This script creates an ipset "%(ipsetname)s". You can manage it
 # manually:
 #
-#     ipset add $(ipsetname)s %(sampleips)s
+#     ipset add %(ipsetname)s %(sampleips)s
 #
 #
 # To clean the iptables rule and ipset run:
@@ -84,7 +84,9 @@ import sys
 import gen_dns
 
 
-parser = argparse.ArgumentParser(description=r'''
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=r'''
 
 This program generates a bash script. The script when run will insert
 (or remove) an iptable rule and ipset. The iptable rule drops traffic
@@ -92,10 +94,7 @@ that matches the BPF rule, which in turn is generated from given
 parameters.
 
 
-
 '''.strip())
-parser.add_argument('-4', '--inet4', action='store_true',
-                    help=argparse.SUPPRESS)
 parser.add_argument('-6', '--inet6', action='store_true',
                     help='generate script for IPv6')
 parser.add_argument('-w', '--write', metavar='file',
@@ -114,9 +113,7 @@ args.type = args.type[0]
 inet = 4 if not args.inet6 else 6
 
 if args.type == 'dns':
-    gen = gen_dns.generate(args.parameters,
-                           inet=inet,
-                           l3off=0)
+    gen = gen_dns.generate(args.parameters, inet=inet, l3off=0)
 else:
     assert False, args.type
 
