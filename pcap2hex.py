@@ -59,7 +59,8 @@ def main():
     else:
         readfds = [open(fname, 'rb') for fname in args]
 
-    off = None
+    l3_off = None
+    l3_off_bad = 0
 
     for fd in readfds:
         p = pcappy.open_offline(fd)
@@ -73,13 +74,18 @@ def main():
                 break
             hdr, data = r
 
-            if off is None:
-                off = utils.find_ip_offset(data)
+            if l3_off is None:
+                l3_off = utils.find_ip_offset(data)
+                if l3_off is None:
+                    l3_off_bad += 1
+                    if l3_off_bad > 5:
+                        raise Exception("Can't find IP offset")
+                    continue
 
             if scrub:
-                data = do_scrub(data, off)
+                data = do_scrub(data, l3_off)
 
-            if normalize and off in (16,):
+            if normalize and l3_off in (16,):
                 data = data[2:]
 
             h = data.encode('hex')
@@ -89,7 +95,6 @@ def main():
                 s = ''.join([c if (c in string.printable and
                                    c not in string.whitespace) else '.'
                              for c in data])
-
                 print "%s\t%s" % (h, s)
 
     sys.stdout.flush()

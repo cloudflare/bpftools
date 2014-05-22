@@ -68,4 +68,4 @@ def find_ip_offset(l2, max_off=40):
         if _looks_like_ip(l2, off):
             return off
 
-    raise Exception("can't find an IP header")
+    return None

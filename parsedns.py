@@ -52,6 +52,7 @@ def unpack_domain(off, l5, rr=False):
 def parsedns(raw):
 
     l2len = utils.find_ip_offset(raw)
+    assert l2len is not None
     l2, l3 = raw[:l2len], raw[l2len:]
 
     print '[.] l2: %s' % l2.encode('hex')

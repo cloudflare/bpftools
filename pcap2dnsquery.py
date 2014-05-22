@@ -42,6 +42,7 @@ def main():
         readfds = [open(fname, 'rb') for fname in args]
 
     l3_off = None
+    l3_off_bad = 0
 
     ignoredcount = 0
     for fd in readfds:
@@ -58,6 +59,11 @@ def main():
 
             if l3_off is None:
                 l3_off = utils.find_ip_offset(data)
+                if l3_off is None:
+                    l3_off_bad += 1
+                    if l3_off_bad > 5:
+                        raise Exception("Can't find IP offset")
+                    continue
 
             l5_off = find_dns_offset(data, l3_off)
             if l5_off is None:
