@@ -23,7 +23,7 @@ first query being equal to "example.com". Another example:
 
   bpf.py *.www.fint.me
 
-will matchd packets that have a any prefix (subdomain) and exactly
+will match packets that have a any prefix (subdomain) and exactly
 "www.fint.me" as suffix. It will match:
 
     blah.www.fint.me
@@ -38,6 +38,18 @@ Also, star has a special meaning only if it's a sole part of
 subdomain: "*xxx.example.com" is treated as a literal star, so is
 "xxx*.example.com". On the other hand "xxx.*.example.com" will have a
 wildcard meaning.
+
+Question mark '?' matches exactly one characer. For example this rule:
+
+  bpf.py fin?.me
+
+will match:
+
+   fint.me, finT.me, finX.me, finZ,me
+
+but will not match:
+
+   finXX.me, fiXX.me, www.finX.me, fin.me
 
 You can create a single rule matching than one domain:
 
@@ -117,7 +129,16 @@ def main():
         list_of_rules.append( list(utils.merge(rule)) )
 
     def match_exact(rule, label, last=False):
-        mask, s = ''.join(map(lambda (a,b): '\x20' if a else '\x00' , rule)), ''.join(map(lambda (a,b): b, rule))
+        mask = []
+        for is_char, b in rule:
+            if is_char and b == '?':
+                mask.append( '\xff' )
+            elif is_char and ignorecase:
+                mask.append( '\x20' )
+            else:
+                mask.append( '\x00' )
+        mask = ''.join(mask)
+        s = ''.join(map(lambda (is_char, b): b, rule))
         print "    ; Match: %s %r  mask=%s" % (s.encode('hex'), s, mask.encode('hex'))
         off = 0
         while s:
@@ -127,7 +148,7 @@ def main():
                 m, = struct.unpack('!I', m)
                 mm, = struct.unpack('!I', mm)
                 print "    ld [x + %i]" % off
-                if ignorecase and mm:
+                if mm:
                     print "    or #0x%08x" % mm
                     m |= mm
                 print "    jneq #0x%08x, %s" % (m, label,)
@@ -138,7 +159,7 @@ def main():
                 m, = struct.unpack('!H', m)
                 mm, = struct.unpack('!H', mm)
                 print "    ldh [x + %i]" % off
-                if ignorecase and mm:
+                if mm:
                     print "    or #0x%04x" % mm
                     m |= mm
                 print "    jneq #0x%04x, %s" % (m, label,)
@@ -149,7 +170,7 @@ def main():
                 mm, mask = mask[:1], mask[1:]
                 mm, = struct.unpack('!B', mm)
                 print "    ldb [x + %i]" % off
-                if ignorecase and mm:
+                if mm:
                     print "    or #0x%02x" % mm
                     m |= mm
                 print "    jneq #0x%02x, %s" % (m, label,)
