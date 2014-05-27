@@ -8,7 +8,8 @@ that will match (and drop) malicious traffic.
 To run these scripts you will need:
 
  - kernel 3.10+ (we need a decent <linux/netfilter.h> header)
- - sudo easy-install pcappy
+ - sudo apt-get install python-setuptools
+ - sudo easy_install pcappy
  - sudo apt-get install binutils-dev libreadline-dev python-scapy
 
 To build:
