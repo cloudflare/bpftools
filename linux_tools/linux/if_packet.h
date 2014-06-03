@@ -3,6 +3,10 @@
 
 #include <linux/types.h>
 
+#ifndef __aligned_u64
+#  define __aligned_u64 __u64 __attribute__((aligned(8)))
+#endif
+
 struct sockaddr_pkt {
 	unsigned short spkt_family;
 	unsigned char spkt_device[14];
