@@ -2,6 +2,7 @@
 
 import struct
 import sys
+import socket
 
 import utils
 
@@ -44,7 +45,21 @@ def unpack_domain(off, l5, rr=False):
         return off
     ttl, rlength = struct.unpack_from('!IH', l5, off)
     off += 6
-    print '                    ttl=%i rrlen=%i %s' % (ttl, rlength, l5[off:off+rlength].encode('hex'))
+    xxx = l5[off:off+rlength]
+    print '                    ttl=%i rrlen=%i: %s' % (ttl, rlength, xxx.encode('hex'))
+    if qtype == 0x0029 and xxx:
+        #ends
+        code, optlen = struct.unpack_from('!HH', xxx)
+        if code == 0x50fa:
+            family, mask, scope = struct.unpack_from('!HBB', xxx, 4)
+            if family == 1:
+                ip = socket.inet_ntoa(xxx[4+4:])
+            else:
+                ip = xxx[4+4:].encode('hex')
+            print " "*23, "family=%i mask=%i scope=%i %s" % (family, mask, scope, ip)
+        else:
+            print " "*23, "code=%04x data=%s" % (code, xxx[4:].encode('hex'))
+
     off += rlength
     return off
 
@@ -71,8 +86,8 @@ def parsedns(raw):
         print '            ip_id: 0x%04x' % (ip_id,)
         print '         fragment: 0x%04x' % (fragment,)
         print '         protocol: 0x%02x' % (protocol,)
-        print '           source: 0x%04x' % (sip,)
-        print '      destination: 0x%04x' % (dip,)
+        print '           source: %s' % (socket.inet_ntoa(l3[12:16]),)
+        print '      destination: %s' % (socket.inet_ntoa(l3[16:20]),)
         if ip_extra:
             print '         ip_extra: %s' % (ip_extra.encode('hex'),)
     elif v_len & 0xf0 == 0x60:
