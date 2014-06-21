@@ -47,18 +47,24 @@ def unpack_domain(off, l5, rr=False):
     off += 6
     xxx = l5[off:off+rlength]
     print '                    ttl=%i rrlen=%i: %s' % (ttl, rlength, xxx.encode('hex'))
-    if qtype == 0x0029 and xxx:
-        #ends
-        code, optlen = struct.unpack_from('!HH', xxx)
-        if code == 0x50fa:
-            family, mask, scope = struct.unpack_from('!HBB', xxx, 4)
-            if family == 1:
-                ip = socket.inet_ntoa(xxx[4+4:])
+    if qtype == 0x0029:
+        print " "*23, "bufsize=%i" % (qclass)
+
+        while xxx:
+            #ends
+            code, optlen = struct.unpack_from('!HH', xxx)
+            xxy, xxx = xxx[4:4+optlen], xxx[4+optlen:]
+            if code == 0x50fa:
+                family, mask, scope = struct.unpack_from('!HBB', xxy)
+                if family == 1:
+                    ip = socket.inet_ntoa(xxy[4:])
+                else:
+                    ip = xxy[4:].encode('hex')
+                print " "*23, "family=%i mask=%i scope=%i %s" % (family, mask, scope, ip)
+            elif code == 3 and len(xxy) == 0:
+                print " "*23, "nsid request"
             else:
-                ip = xxx[4+4:].encode('hex')
-            print " "*23, "family=%i mask=%i scope=%i %s" % (family, mask, scope, ip)
-        else:
-            print " "*23, "code=%04x data=%s" % (code, xxx[4:].encode('hex'))
+                print " "*23, "code=%04x data=%s" % (code, xxy.encode('hex'))
 
     off += rlength
     return off
