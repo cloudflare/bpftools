@@ -49,9 +49,15 @@ def unpack_domain(off, l5, rr=False):
     print '                    ttl=%i rrlen=%i: %s' % (ttl, rlength, xxx.encode('hex'))
     if qtype == 0x0029:
         print " "*23, "bufsize=%i" % (qclass)
+        if ttl & (1<<15):
+            print " "*23, "dnssec_ok_flag"
+        edns_ver = (ttl >> 16) & 0xFF
+        if edns_ver:
+            print " "*23, "ends_version=%i (INVALID!)" % edns_ver
+        if ttl & (0xFF007FFF):
+            print " "*23, "extra edns flags"
 
         while xxx:
-            #ends
             code, optlen = struct.unpack_from('!HH', xxx)
             xxy, xxx = xxx[4:4+optlen], xxx[4+optlen:]
             if code == 0x50fa:
