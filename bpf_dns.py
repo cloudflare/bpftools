@@ -188,8 +188,9 @@ def main():
         print "    tax"
 
     if ipversion == 4:
-        print "    ld #%i" % (l3_off + 8 + 12) # 8B of udp + 12B of dns header
         print "    ldx 4*([%i]&0xf)" % (l3_off,)
+        print "    ; l3_off(%i) + 8 of udp + 12 of dns" % (l3_off,)
+        print "    ld #%i" % (l3_off + 8 + 12) # 8B of udp + 12B of dns header
         print "    add x"
     elif ipversion == 6:
         # assuming first "next header" is UDP
