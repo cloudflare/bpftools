@@ -105,7 +105,26 @@ def parsedns(raw):
     dns_id, flags, qdcnt, anscnt, authcnt, extracnt = struct.unpack_from('!HHHHHH', l5)
 
     print '               id: 0x%04x' % (dns_id,)
-    print '            flags: 0x%04x' % (flags,)
+    print '            flags: 0x%04x' % (flags,),
+    f = []
+    f.append('response' if flags & (1<<15) else 'query')
+    if flags & (1<<10):
+        f.append('authoritative')
+    if flags & (1<<9):
+        f.append('truncated')
+    if flags & (1<<8):
+        f.append('recursion_desired')
+    if flags & (1<<7):
+        f.append('recursion_available')
+    if flags & (1<<6):
+        f.append('z')
+    if flags & (1<<5):
+        f.append('authenticated_data')
+    if flags & (1<<4):
+        f.append('checking_disabled')
+    f.append( 'op=%x' % ((flags>>11) & 0xF))
+    f.append( 'rcode=%x' % ((flags) & 0xF))
+    print ' '.join(f)
     print '        questions: %s' % (qdcnt,)
     print '          answers: %s' % (anscnt,)
     print '             auth: %s' % (authcnt,)
