@@ -83,6 +83,7 @@ import sys
 
 import gen_dns
 import gen_dns_validate
+import gen_suffix
 
 
 parser = argparse.ArgumentParser(
@@ -100,7 +101,7 @@ parser.add_argument('-6', '--inet6', action='store_true',
                     help='generate script for IPv6')
 parser.add_argument('-w', '--write', metavar='file',
                     help='name the generated script')
-parser.add_argument('type', nargs=1, choices=['dns', 'dns_validate'],
+parser.add_argument('type', nargs=1, choices=['dns', 'dns_validate', 'suffix'],
                     help='use BPF generator type')
 parser.add_argument('parameters', nargs='*',
                     help='parameters for the BPF generator')
@@ -117,6 +118,8 @@ if args.type == 'dns':
     gen = gen_dns.generate(args.parameters, inet=inet, l3off=0)
 elif args.type == 'dns_validate':
     gen = gen_dns_validate.generate(args.parameters, inet=inet, l3off=0)
+elif args.type == 'suffix':
+    gen = gen_suffix.generate(args.parameters, inet=inet, l3off=0)
 else:
     assert False, args.type
 
