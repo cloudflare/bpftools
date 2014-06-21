@@ -45,8 +45,7 @@ def merge(iterable, merge=lambda a,b:a+b):
 
 def _looks_like_ip(l2, off):
     ipver, _, total_length = struct.unpack_from('!BBH', l2, off)
-    if (ipver & 0xF0 == 0x40 and (ipver & 0x0f) >= 5
-        and total_length + off == len(l2)):
+    if (ipver & 0xF0 == 0x40 and (ipver & 0x0f) >= 5):
         return 4
 
     vertos, _, _,  pay_len, proto, ttl = struct.unpack_from('!BBHHBB', l2, off)
@@ -69,3 +68,20 @@ def find_ip_offset(l2, max_off=40):
             return off
 
     return None
+
+
+def do_scrub(l2, off):
+    data = list(l2)
+    if off not in (14, 16):
+        raise Exception("off=%i Not ethernet, not sure how to scrub MACS" % off)
+    for i in xrange(off-2):
+        data[i] = '\x00'
+
+    ipver = ord(data[off])
+    if ipver & 0xF0 == 0x40:
+        for i in xrange(off+12, off+12+4+4):
+            data[i] = '\x00'
+    elif ipver & 0xF0 == 0x60:
+        for i in xrange(off+8, off+8+16+16):
+            data[i] = '\x00'
+    return ''.join(data)

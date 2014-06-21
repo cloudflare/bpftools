@@ -36,7 +36,7 @@ def main():
     normalize = True
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hsnaA",
+        opts, args = getopt.getopt(sys.argv[1:], "hsna",
                                    ["help", "scrub", "no-normalize", "ascii"])
     except getopt.GetoptError as err:
         print str(err)
@@ -49,7 +49,7 @@ def main():
             scrub = True
         elif o in ("-n", "--no-normalize"):
             normalize = False
-        elif o in ("-a", "-A", "--ascii"):
+        elif o in ("-a", "--ascii"):
             ascii = True
         else:
             assert False, "unhandled option"
@@ -74,6 +74,7 @@ def main():
                 break
             hdr, data = r
 
+
             if l3_off is None:
                 l3_off = utils.find_ip_offset(data)
                 if l3_off is None:
@@ -83,7 +84,7 @@ def main():
                     continue
 
             if scrub:
-                data = do_scrub(data, l3_off)
+                data = utils.do_scrub(data, l3_off)
 
             if normalize and l3_off in (16,):
                 data = data[2:]
@@ -101,24 +102,6 @@ def main():
 
     # normal exit crashes due to a double free error in pcappy
     os._exit(0)
-
-
-def do_scrub(l2, off):
-    data = list(l2)
-    if off not in (14, 16):
-        raise Exception("off=%i Not ethernet, not sure how to scrub MACS" % off)
-    for i in xrange(12):
-        data[i] = '\x00'
-    ipver, = struct.unpack_from('!B', l2, off)
-    if ipver & 0xF0 == 0x40:
-        for i in xrange(off+12, off+12+4+4):
-            data[i] = '\x00'
-    elif ipver & 0xF0 == 0x60:
-        for i in xrange(off+8, off+8+16+16):
-            data[i] = '\x00'
-    else:
-        assert False, "neither ipv4 or 6"
-    return ''.join(data)
 
 
 if __name__ == "__main__":
