@@ -43,6 +43,7 @@ set -o pipefail
 
 iptablesrule () {
     ${IPTABLES} \
+        --wait \
         ${*} \
         -i ${DEFAULTINT} \
         -p udp --dport 53 \

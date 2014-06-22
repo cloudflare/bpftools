@@ -32,6 +32,7 @@ set -o pipefail
 
 main_match () {
     ${IPTABLES} \
+        --wait \
         ${*} \
         -i ${DEFAULTINT} \
         -p udp --dport 53 \
@@ -40,15 +41,15 @@ main_match () {
 }
 
 chain_create() {
-    ${IPTABLES} -N %(chain)s
+    ${IPTABLES} --wait -N %(chain)s
 %(accept_cmds)s
 %(drop_cmds)s
-    ${IPTABLES} -A %(chain)s -j RETURN
+    ${IPTABLES} --wait -A %(chain)s -j RETURN
 }
 
 chain_delete() {
-    ${IPTABLES} -F %(chain)s
-    ${IPTABLES} -X %(chain)s
+    ${IPTABLES} --wait -F %(chain)s
+    ${IPTABLES} --wait -X %(chain)s
 }
 
 if [ "$*" == "--delete" ]; then
@@ -128,6 +129,7 @@ for action, list_of_patterns in [('ACCEPT', args.accept), ('DROP', args.drop)]:
 
         cmd = r'''
     ${IPTABLES} \
+        --wait \
         -A %s \
         -m bpf --bytecode "%s" \
         -m comment --comment "%s" \
