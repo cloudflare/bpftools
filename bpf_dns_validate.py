@@ -80,16 +80,19 @@ def main():
     print "    tax"
     print "    ; x points to start of DNS"
     print
+
     print "    ; allow only flags:"
     print "    ;   4: checking_disabled"
+    flags = 0xffff
+    flags &= ~(1 << 4)
     if not strict:
         print "    ;   8: recursion_desired"
+        print "    ;   9: recursion_available"
+        # there is some background noise of RD
+        flags &= ~(1 << 8)
+        # RIPE Atlas probes set RA flag in requests. Ugly.
+        flags &= ~(1 << 9)
     print "    ldh [x + 2]        ; opcode = 0, rdcode = 0 etc"
-    flags = (0x78<<8) | (0x86<<8) | 0xcf
-    flags |= 1 << 5  # this bit never happens
-    if strict:
-        flags |= 1 << 8 # there is some backgroudn noise of recursive queries
-    # In practice only bit 4 varies a lot
     print "    and #0x%04x" % flags
     print "    jne #0, match"
     print
