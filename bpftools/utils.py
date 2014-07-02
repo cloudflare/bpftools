@@ -1,9 +1,9 @@
-
-import itertools
 import os
-import subprocess
 import struct
+import subprocess
 import sys
+
+from pkg_resources import resource_filename
 
 
 def find_binary(prefixes, name, args):
@@ -18,8 +18,13 @@ def find_binary(prefixes, name, args):
 
 
 def bpf_compile(assembly):
-    prefixes = [".", "linux_tools", os.path.dirname(sys.argv[0]),
-                os.path.realpath(os.path.dirname(sys.argv[0]))]
+    prefixes = [resource_filename(__name__, os.path.join("..","linux_tools")),
+                resource_filename(__name__, "linux_tools"),
+                ".",
+                "linux_tools",
+                os.path.dirname(sys.argv[0]),
+                os.path.realpath(os.path.dirname(sys.argv[0])),
+                ]
     prefix = find_binary(prefixes, "bpf_asm", ['/dev/null'])
 
     out, err = subprocess.Popen([os.path.join(prefix, "bpf_asm")],
@@ -32,17 +37,6 @@ def bpf_compile(assembly):
     return out.strip()
 
 
-# Accepts list of tuples [(mergeable, value)] and merges fields where
-# mergeable is True.
-def merge(iterable, merge=lambda a,b:a+b):
-    for k, g in itertools.groupby(iterable, key=lambda a:a[0]):
-        if k is True:
-            yield reduce(merge, (i[1] for i in g))
-        else:
-            for i in g:
-                yield i[1]
-
-
 def _looks_like_ip(l2, off):
     ipver, _, total_length = struct.unpack_from('!BBH', l2, off)
     if (ipver & 0xF0 == 0x40 and (ipver & 0x0f) >= 5):
@@ -53,6 +47,7 @@ def _looks_like_ip(l2, off):
         and ttl > 0):
         return 6
     return None
+
 
 def find_ip_offset(l2, max_off=40):
     # first look for both ethernet and ip header

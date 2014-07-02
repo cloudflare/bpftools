@@ -1,4 +1,4 @@
-Floodgate
+BPF Tools
 =========
 
 Here you can find a set of tool for analyzing and processing of pcap
@@ -7,14 +7,15 @@ that will match (and drop) malicious traffic.
 
 To run these scripts you will need:
 
- - kernel 3.10+ (we need a decent <linux/netfilter.h> header)
- - sudo apt-get install python-setuptools
- - sudo easy_install pcappy
- - sudo apt-get install binutils-dev libreadline-dev python-scapy
+ - recent kernel headers (3.10? we need a decent <linux/netfilter.h>)
+ - install the dependencies:
 
-To build:
+      sudo apt-get install python-setuptools binutils-dev libreadline-dev python-scapy
+      sudo easy_install pcappy
 
-    $ make
+ - build binary tools in `linux_tools` directory:
+
+      make
 
 
 iptables_bpf.py

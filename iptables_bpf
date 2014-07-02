@@ -49,6 +49,7 @@ iptablesrule () {
         -p udp --dport 53 \
         -m set --match-set %(ipsetname)s dst \
         -m bpf --bytecode "%(bytecode)s" \
+        -m comment --comment "%(bpf_cmd_s)s" \
         -j DROP
 }
 
@@ -82,10 +83,7 @@ import stat
 import string
 import sys
 
-import gen_dns
-import gen_dns_validate
-import gen_suffix
-
+import bpftools
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -96,39 +94,43 @@ This program generates a bash script. The script when run will insert
 that matches the BPF rule, which in turn is generated from given
 parameters.
 
+See "./bpfgen --help" for more information.
 
 '''.strip())
 parser.add_argument('-6', '--inet6', action='store_true',
                     help='generate script for IPv6')
+parser.add_argument('-n', '--negate', action='store_true',
+                    help='negate the logic')
 parser.add_argument('-w', '--write', metavar='file',
                     help='name the generated script')
-parser.add_argument('type', nargs=1, choices=['dns', 'dns_validate', 'suffix'],
-                    help='use BPF generator type')
+parser.add_argument('type', nargs=1, choices=bpftools.generator_names,
+                    help='BPF generator')
 parser.add_argument('parameters', nargs='*',
-                    help='parameters for the BPF generator')
+                    help='parameters passed to the BPF generator')
 
 args = parser.parse_args()
-if not args or len(args.type) != 1:
+if len(args.type) != 1:
     parser.print_help()
     sys.exit(-1)
-args.type = args.type[0]
 
 inet = 4 if not args.inet6 else 6
 
-if args.type == 'dns':
-    gen = gen_dns.generate(args.parameters, inet=inet, l3off=0)
-elif args.type == 'dns_validate':
-    gen = gen_dns_validate.generate(args.parameters, inet=inet, l3off=0)
-elif args.type == 'suffix':
-    gen = gen_suffix.generate(args.parameters, inet=inet, l3off=0)
-else:
-    assert False, args.type
+a = []
+for assembly in [False, True]:
+    name, ret = bpftools.gen(args.type[0],
+                                  args.parameters,
+                                  assembly=assembly,
+                                  l3_off=0,
+                                  ipversion=inet,
+                                  negate=args.negate,
+                                  )
+    a.append(ret)
+bytecode, assembly = a
 
-
-if int(gen.bytecode.split(',')[0]) > 63:
+if int(bytecode.split(',')[0]) > 63:
     raise Exception("bytecode too long!")
 
-name = 'bpf_%s_ip%s%s%s' % (args.type, inet, '_' if gen.name else '', gen.name)
+name = 'bpf_%s_ip%s%s%s' % (args.type[0], inet, '_' if name else '', name)
 
 fname = args.write or name + '.sh'
 
@@ -137,10 +139,12 @@ if fname == '-':
 else:
     f = open(fname, 'wb')
 
+cmd = sys.argv[1:]
 ctx = {
-    'bpf_cmd': gen.cmd,
-    'bytecode': gen.bytecode,
-    'assembly': '#    ' + '\n#    '.join(gen.assembly.split('\n')),
+    'bpf_cmd': cmd,
+    'bpf_cmd_s': ' '.join(cmd).replace('"', "").replace("$",""),
+    'bytecode': bytecode,
+    'assembly': '#    ' + '\n#    '.join(assembly.split('\n')),
     'fname': fname if fname != '-' else name + '.sh',
     'ipsetname': name[:31],
 }
@@ -164,4 +168,3 @@ f.flush()
 if f != sys.stdout:
     print "Generated file %r" % (fname,)
     os.chmod(fname, 0750)
-

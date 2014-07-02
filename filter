@@ -7,7 +7,7 @@ import pcappy
 import pcappy.types
 import sys
 
-import utils
+from bpftools import utils
 
 
 def usage():

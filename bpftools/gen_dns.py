@@ -1,27 +1,39 @@
-#!/usr/bin/env python
-
-import getopt
-import sys
+import argparse
+import itertools
+import string
 import struct
-import StringIO as stringio
-
-import utils
+import sys
 
 
-def usage():
-    print r"""
-bpf_dns.py [ OPTIONS ] [ domain... ]
+# Accepts list of tuples [(mergeable, value)] and merges fields where
+# mergeable is True.
+def merge(iterable, merge=lambda a,b:a+b):
+    for k, g in itertools.groupby(iterable, key=lambda a:a[0]):
+        if k is True:
+            yield reduce(merge, (i[1] for i in g))
+        else:
+            for i in g:
+                yield i[1]
+
+
+ACCEPTABLE_CHARS = set(string.printable) - set(string.whitespace) - set(string.punctuation)
+
+def gen(args, l3_off=0, ipversion=4, negate=False):
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        prog="%s dns --" % (sys.argv[0]),
+        description=r'''
 
 This tool creates a raw Berkeley Packet Filter (BPF) rule that will
-match IPv4 packets which are DNS queries against listed domains. For
+match packets which are DNS queries against listed domains. For
 example:
 
-  bpf.py example.com
+  %(prog)s example.com
 
 will print a BPF rule matching all packets that look like a DNS packet
 first query being equal to "example.com". Another example:
 
-  bpf.py *.www.fint.me
+  %(prog)s *.www.fint.me
 
 will match packets that have a any prefix (subdomain) and exactly
 "www.fint.me" as suffix. It will match:
@@ -41,7 +53,7 @@ wildcard meaning.
 
 Question mark '?' matches exactly one characer. For example this rule:
 
-  bpf.py fin?.me
+  %(prog)s fin?.me
 
 will match:
 
@@ -53,65 +65,33 @@ but will not match:
 
 You can create a single rule matching than one domain:
 
-  bpf.py example.com *.www.fint.me
+  %(prog)s example.com *.www.fint.me
 
 Leading and trailing dots are ignored, this commands are equivalent:
 
-  bpf.py example.com fint.me
-  bpf.py .example.com fint.me.
+  %(prog)s example.com fint.me
+  %(prog)s .example.com fint.me.
 
-Options are:
-  -h, --help         print this message
-  -n, --negate       capture packets that don't match given domains
-  -i, --ignore-case  make the rule case insensitive. use with care.
-  -s, --assembly     print BPF assembly instead of byte code
-  -o, --offset       offset of l3 (IP) header, 14 by default
-  -6, --inet6        rule should match IPv6, not IPv4 packets
-""".lstrip()
-    sys.exit(2)
+Finally the "--ignorecase" option will produce BPF bytecode that
+matches domains in case insensitive way. Beware, the genrated bytecode
+will be significantly longer.
+    ''')
 
+    parser.add_argument('-i', '--ignorecase', action='store_true',
+                        help='match domains in case-insensitive way')
+    parser.add_argument('domains', nargs='*',
+                        help='DNS domain patterns to match on')
 
-def main():
-    ignorecase = negate = assembly = False
-    l3_off = 14
-    ipversion = 4
+    args = parser.parse_args(args)
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hinso:6",
-                                   ["help", "ignore-case", "negate",
-                                    "assembly", "offset=", "inet6"])
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-
-    for o, a in opts:
-        if o in ("-h", "--help"):
-            usage()
-            sys.exit()
-        elif o in ("-i", "--ignore-case"):
-            ignorecase = True
-        elif o in ("-n", "--negate"):
-            negate = True
-        elif o in ("-s", "--assembly"):
-            assembly = True
-        elif o in ("-o", "--offset"):
-            l3_off = int(a)
-        elif o in ("-6", "--inet6"):
-            ipversion = 6
-        else:
-            assert False, "unhandled option"
-
-    if not args:
-        print >> sys.stderr, "At least one domain name required."
+    if not args.domains:
+        parser.print_help()
         sys.exit(-1)
-
-    if not assembly:
-        sys.stdout, saved_stdout = stringio.StringIO(), sys.stdout
 
 
     list_of_rules = []
 
-    for domain in args:
+    for domain in args.domains:
         # remove trailing and leading dots and whitespace
         domain = domain.strip(".").strip()
 
@@ -126,14 +106,14 @@ def main():
                 rule.append( (True, [(False, chr(len(part)))] \
                                   + [(True, c) for c in part]) )
 
-        list_of_rules.append( list(utils.merge(rule)) )
+        list_of_rules.append( list(merge(rule)) )
 
     def match_exact(rule, label, last=False):
         mask = []
         for is_char, b in rule:
             if is_char and b == '?':
                 mask.append( '\xff' )
-            elif is_char and ignorecase:
+            elif is_char and args.ignorecase:
                 mask.append( '\x20' )
             else:
                 mask.append( '\x00' )
@@ -217,15 +197,19 @@ def main():
     print "lb_%i:" % (i+1,)
     print "    ret #%i" % (0 if not negate else 1)
 
+    name_parts = []
+    for domain in args.domains:
+        if domain[0] == '-':
+            continue
 
-    sys.stdout.flush()
+        domain = domain.strip(".").strip()
+        parts = []
+        for part in domain.split("."):
+            if part == '*':
+                parts.append( 'any' )
+            else:
+                parts.append( ''.join(c if c in ACCEPTABLE_CHARS else 'x'
+                                      for c in part) )
+        name_parts.append( '_'.join(parts) )
+    return '_'.join(name_parts)
 
-    if not assembly:
-        assembly = sys.stdout.seek(0)
-        assembly = sys.stdout.read()
-        sys.stdout = saved_stdout
-        print utils.bpf_compile(assembly)
-
-
-if __name__ == "__main__":
-    main()

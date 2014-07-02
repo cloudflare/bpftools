@@ -8,7 +8,7 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 import sys
 
-import utilsdns
+from bpftools import utilsdns
 
 
 def usage():

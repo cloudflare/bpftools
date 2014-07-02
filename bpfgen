@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import stat
+import string
+import sys
+
+import bpftools
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=r'''
+
+This tool creates a Berkeley Packet Filter (BPF) bytecode that will
+match packets based on given criteria. Right now we support the
+following generators:
+
+ dns          - matches dns queries for given domains
+ dns_validate - matches dns malformed requests
+ suffix       - matches packets with given suffix
+
+Generators can take arbitrary parameters and command line options. To
+read more on their usage pass '--help' option to the genrator (not to
+this wrapper), for example:
+
+    %(prog)s dns -- --help
+
+Example of use:
+
+    %(prog)s dns -- -i *.example.com
+    %(prog)s dns -- -i example.com *.example.com *.*.example.com
+    %(prog)s dns_validate
+    %(prog)s dns_validate -- --strict
+    %(prog)s suffix -- 010203
+
+Note that some common options are accepted by this wrapper, not by the
+BPF generators, for example:
+
+    %(prog)s -s suffix -- 010203
+    %(prog)s -s -n suffix -- 010203
+    %(prog)s -s -n -o 14 suffix -- 010203
+    %(prog)s -s -n -o 14 -6 suffix -- 010203
+    ''')
+
+    parser.add_argument('-6', '--inet6', action='store_true',
+                        help='generate script for IPv6')
+    parser.add_argument('-n', '--negate', action='store_true',
+                        help='negate the logic')
+    parser.add_argument('-o', '--offset', type=int, default=0,
+                        help='offset of an L3 header')
+    parser.add_argument('-s', '--assembly', action='store_true',
+                        help='print readable assembly, not numeric bytecode')
+    parser.add_argument('type', nargs=1, choices=bpftools.generator_names,
+                        help='BPF generator type')
+    parser.add_argument('parameters', nargs='*',
+                        help='parameters passed to the BPF generator')
+
+    args = parser.parse_args()
+
+    if len(args.type) != 1:
+        parser.print_help()
+        sys.exit(-1)
+
+    name, ret = bpftools.gen(args.type[0],
+                             args.parameters,
+                             assembly=args.assembly,
+                             l3_off=args.offset,
+                             ipversion=4 if not args.inet6 else 6,
+                             negate=args.negate,
+                             )
+    print ret
+
+
+if __name__ == "__main__":
+    main()
