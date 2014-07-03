@@ -2,8 +2,8 @@ BPF Tools
 =========
 
 Here you can find a set of tool for analyzing and processing of pcap
-traffic dumps. The aim of this tool is to help creating a BPF rule
-that will match (and drop) malicious traffic.
+traffic dumps. The aim of this tool is to help creating BPF rules that
+will match (and drop) malicious traffic.
 
 To run these scripts you will need:
 
@@ -11,7 +11,7 @@ To run these scripts you will need:
 
         $ sudo apt-get install linux-headers-generic
 
- - Installed the dependencies:
+ - Installed dependencies:
 
         $ sudo apt-get install python-setuptools libpcap-dev libreadline-dev
         $ sudo easy_install pcappy
@@ -19,6 +19,28 @@ To run these scripts you will need:
  - Build the binary tools in `linux_tools` directory:
 
         $ make
+
+
+BPF Tools repository contains a number simple Python scripts, some of
+them focus on analyzing pcap files, others focus more on the BPF:
+
+ - `pcap2hex`, `hex2pcap`
+ - `parsedns`
+ - `bpfgen`
+ - `filter`
+ - `iptables_bpf`, `iptables_bpf_chain`
+
+
+bpfgen
+======
+
+The core script is `bpfgen` which generates the BPF bytecode. For more
+information please read:
+
+    $ ./bpfgen --help
+    $ ./bpfgen dns -- --help
+    $ ./bpfgen dns_validate -- --help
+    $ ./bpfgen suffix -- --help
 
 
 iptables_bpf
@@ -33,7 +55,7 @@ For example, to generate a script dropping packets exactly to a domain
     $ ./iptables_bpf dns -- example.com
     Generated file 'bpf_dns_ip4_example_com.sh'
 
-If you want the ip6tables commands for IPv6 use `-6` option:
+If you want commands for IPv6 use `-6` flag:
 
     $ ./iptables_bpf -6 dns -- example.com
     Generated file 'bpf_dns_ip6_example_com.sh'
