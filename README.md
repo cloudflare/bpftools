@@ -7,19 +7,22 @@ that will match (and drop) malicious traffic.
 
 To run these scripts you will need:
 
- - recent kernel headers (3.10? we need a decent <linux/netfilter.h>)
- - install the dependencies:
+ - Kernel headers (ideally from a 3.10+ kernel):
 
-      sudo apt-get install python-setuptools binutils-dev libreadline-dev python-scapy
-      sudo easy_install pcappy
+        $ sudo apt-get install linux-headers-generic
 
- - build binary tools in `linux_tools` directory:
+ - Installed the dependencies:
 
-      make
+        $ sudo apt-get install python-setuptools libpcap-dev libreadline-dev
+        $ sudo easy_install pcappy
+
+ - Build the binary tools in `linux_tools` directory:
+
+        $ make
 
 
-iptables_bpf.py
-===============
+iptables_bpf
+============
 
 This script generates a simple bash script that contains iptables
 rules that drop traffic based on selected parameters.
@@ -27,39 +30,35 @@ rules that drop traffic based on selected parameters.
 For example, to generate a script dropping packets exactly to a domain
 "example.com" you can run:
 
-    $ ./iptables_bpf.py dns example.com
+    $ ./iptables_bpf dns -- example.com
     Generated file 'bpf_dns_ip4_example_com.sh'
 
-If you want the ip6tables commands for IPv6 use --inet6 option:
+If you want the ip6tables commands for IPv6 use `-6` option:
 
-    $ ./iptables_bpf.py --inet6 dns example.com
+    $ ./iptables_bpf -6 dns -- example.com
     Generated file 'bpf_dns_ip6_example_com.sh'
 
 The rule can match any from a number listed domains:
 
-    $ ./iptables_bpf.py dns example.com example1.com example2.com
+    $ ./iptables_bpf dns -- example.com example1.com example2.com
     Generated file 'bpf_dns_ip4_example_com_example1_com_example2_com.sh'
 
 If you want to match any subdomain you can use a star '*'. This will
 only work if star is the only character in a domain part. Valid
 examples:
 
-    $ ./iptables_bpf.py dns *.example.com
+    $ ./iptables_bpf dns -- *.example.com
     Generated file 'bpf_dns_ip4_any_example_com.sh'
 
-    $ ./iptables_bpf.py dns *.example.*.gov.de
+    $ ./iptables_bpf dns -- *.example.*.gov.de
     Generated file 'bpf_dns_ip4_any_example_any_gov_de.sh'
 
 
 You can run the generated script to apply the rule and match it
-against flooded ip address:
+against one or more flooded ip addresses:
 
     $ sudo ./bpf_dns_ip4_example_com.sh 1.2.3.4/32
 
-You need bpf-compatible IPTABLES, you can override the default path:
-
-    $ sudo IPTABLES=~/iptables ./bpf_dns_ip4_example_com.sh 1.2.3.4/32
-
-To remove the iptable rule simply specify --delete:
+To remove the iptable rule simply specify `--delete`:
 
     $ sudo ./bpf_dns_ip4_example_com.sh --delete

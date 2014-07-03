@@ -93,7 +93,17 @@ This program generates a bash script. The script when run will insert
 that matches the BPF rule, which in turn is generated from given
 parameters.
 
-See "./bpfgen --help" for more information.
+See "./bpfgen --help" for more information on BPF generators.
+
+Usage example:
+
+  %(prog)s dns -- *.example.com
+
+  %(prog)s dns -- --ignorecase *.example.com
+
+  %(prog)s -6 dns -- *.example.com
+
+  %(prog)s dns_validate -- --strict
 
 '''.strip())
 parser.add_argument('-6', '--inet6', action='store_true',
