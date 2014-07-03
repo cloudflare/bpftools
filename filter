@@ -7,7 +7,7 @@ import pcappy
 import pcappy.types
 import sys
 
-from bpftools import utils
+import bpftools.utils
 
 
 def usage():
@@ -75,7 +75,7 @@ def main():
             bpf = bpf_from_bytecode(a)
         elif o in ("-c", "--compile"):
             x = open(a, 'rb') # check if can open
-            bpf = bpf_from_bytecode(utils.bpf_compile(x.read()))
+            bpf = bpf_from_bytecode(bpftools.utils.bpf_compile(x.read()))
         else:
             assert False, "unhandled option"
 

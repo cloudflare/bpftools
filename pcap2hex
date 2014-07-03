@@ -7,7 +7,7 @@ import string
 import struct
 import pcappy
 
-import utils
+import bpftools.utils
 
 
 def usage():
@@ -76,7 +76,7 @@ def main():
 
 
             if l3_off is None:
-                l3_off = utils.find_ip_offset(data)
+                l3_off = bpftools.utils.find_ip_offset(data)
                 if l3_off is None:
                     l3_off_bad += 1
                     if l3_off_bad > 5:
@@ -84,7 +84,7 @@ def main():
                     continue
 
             if scrub:
-                data = utils.do_scrub(data, l3_off)
+                data = bpftools.utils.do_scrub(data, l3_off)
 
             if normalize and l3_off in (16,):
                 data = data[2:]
