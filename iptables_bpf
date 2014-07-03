@@ -64,9 +64,8 @@ if [ "$*" == "--delete" ]; then
 else
 
     ${IPSET} -exist create %(ipsetname)s hash:net family %(ipsetfamily)s
-    while [ "$*" != "" ]; do
-        ${IPSET} -exist add %(ipsetname)s "$1"
-        shift
+    for IP in %(ips)s $@; do
+        ${IPSET} -exist add %(ipsetname)s "$IP"
     done
 
     A=`(iptablesrule -C INPUT || echo "error") 2>/dev/null`
@@ -99,6 +98,8 @@ See "./bpfgen --help" for more information.
 '''.strip())
 parser.add_argument('-6', '--inet6', action='store_true',
                     help='generate script for IPv6')
+parser.add_argument('-i', '--ip', metavar='ip', action='append',
+                    help='preset IP in the set')
 parser.add_argument('-n', '--negate', action='store_true',
                     help='negate the logic')
 parser.add_argument('-w', '--write', metavar='file',
@@ -147,6 +148,7 @@ ctx = {
     'assembly': '#    ' + '\n#    '.join(assembly.split('\n')),
     'fname': fname if fname != '-' else name + '.sh',
     'ipsetname': name[:31],
+    'ips': ' '.join(repr(s) for s in (args.ip or [])),
 }
 
 if inet == 4:

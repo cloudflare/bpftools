@@ -101,8 +101,8 @@ options and drops domains listed with "--drop" option. Example:
 '''.strip())
 parser.add_argument('-6', '--inet6', action='store_true',
                     help='generate script for IPv6')
-parser.add_argument('-i', '--ips', metavar='ips', action='append',
-                    help='preset ips in the set')
+parser.add_argument('-i', '--ip', metavar='ip', action='append',
+                    help='preset IP in the set')
 parser.add_argument('-w', '--write', metavar='name',
                     help='name the generated script')
 parser.add_argument('-a', '--accept', metavar='accept', action='append',
@@ -165,7 +165,7 @@ ctx = {
     'fname': fname,
     'ipsetname': args.write + '_ip' + str(inet),
     'chain': args.write.upper(),
-    'ips': ' '.join(repr(s) for s in (args.ips or "").split()),
+    'ips': ' '.join(repr(s) for s in (args.ip or [])),
 }
 
 if inet == 4:
