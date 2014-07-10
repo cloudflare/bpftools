@@ -82,6 +82,6 @@ are clear supply "--strict" flag.
     print "match:"
     print "    ret #%i" % (1 if not negate else 0)
 
-    if arg.strict:
+    if args.strict:
         return 'strict'
     return ''
