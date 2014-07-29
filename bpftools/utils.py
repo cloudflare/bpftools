@@ -13,7 +13,7 @@ def find_binary(prefixes, name, args):
         except OSError, e:
             continue
         return prefix
-    print >> sys.stderr, prefix, "%r tool not found in your PATH" % (name,)
+    print >> sys.stderr, prefix, "%r not found in your PATH nor LINUX_TOOLS_PATH" % (name,)
     os._exit(-2)
 
 
@@ -24,6 +24,7 @@ def bpf_compile(assembly):
                 "linux_tools",
                 os.path.dirname(sys.argv[0]),
                 os.path.realpath(os.path.dirname(sys.argv[0])),
+                os.getenv("LINUX_TOOLS_PATH", "."),
                 ]
     prefix = find_binary(prefixes, "bpf_asm", ['/dev/null'])
 
