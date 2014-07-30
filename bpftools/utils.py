@@ -18,7 +18,8 @@ def find_binary(prefixes, name, args):
 
 
 def bpf_compile(assembly):
-    prefixes = [resource_filename(__name__, os.path.join("..","linux_tools")),
+    prefixes = ["",
+                resource_filename(__name__, os.path.join("..","linux_tools")),
                 resource_filename(__name__, "linux_tools"),
                 ".",
                 "linux_tools",
