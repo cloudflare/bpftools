@@ -74,7 +74,6 @@ def main():
                 break
             hdr, data = r
 
-
             if l3_off is None:
                 l3_off = bpftools.utils.find_ip_offset(data)
                 if l3_off is None:
