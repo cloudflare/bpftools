@@ -13,7 +13,8 @@ To run these scripts you will need:
 
  - Installed dependencies:
 
-        $ sudo apt-get install python-setuptools libpcap-dev libreadline-dev
+        $ sudo apt-get install python-setuptools libpcap-dev \
+                               libreadline-dev binutils-dev bison flex
         $ sudo easy_install pcappy
 
  - Build the binary tools in `linux_tools` directory:
