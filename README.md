@@ -1,6 +1,11 @@
 BPF Tools
 =========
 
+An introductory blog post:
+
+  - http://blog.cloudflare.com/introducing-the-bpf-tools
+
+
 Here you can find a set of tool for analyzing and processing of pcap
 traffic dumps. The aim of this tool is to help creating BPF rules that
 will match (and drop) malicious traffic.
