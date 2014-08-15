@@ -58,8 +58,10 @@ are clear supply "--strict" flag.
 
     print "    ; allow only flags:"
     print "    ;   4: checking_disabled"
+    print "    ;   5: authenticated_data"
     flags = 0xffff
     flags &= ~(1 << 4)
+    flags &= ~(1 << 5)
     if not args.strict:
         print "    ;   8: recursion_desired"
         print "    ;   9: recursion_available"
