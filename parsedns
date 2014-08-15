@@ -38,6 +38,9 @@ def unpack_domain(off, l5, rr=False):
             print '%r' % (l5[off+1:off+1+c],),
             off += c + 1
 
+    if off1:
+        off = off1
+
     qtype, qclass = struct.unpack_from('!HH', l5, off)
     off += 4
     print '                    type=0x%04x class=0x%04x'  % (qtype, qclass)
@@ -50,12 +53,12 @@ def unpack_domain(off, l5, rr=False):
     if qtype == 0x0029:
         print " "*23, "bufsize=%i" % (qclass)
         if ttl & (1<<15):
-            print " "*23, "dnssec_ok_flag"
+             print " "*23, "dnssec_ok_flag"
         edns_ver = (ttl >> 16) & 0xFF
         if edns_ver:
             print " "*23, "ends_version=%i (INVALID!)" % edns_ver
         if ttl & (0xFF007FFF):
-            print " "*23, "extra edns flags"
+            print " "*23, "extra edns flags %08x" % ttl
 
         while xxx:
             code, optlen = struct.unpack_from('!HH', xxx)
