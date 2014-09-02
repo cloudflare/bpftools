@@ -67,14 +67,27 @@ You can create a single rule matching than one domain:
 
   %(prog)s example.com *.www.fint.me
 
+The "--ignorecase" option will produce BPF bytecode that matches
+domains in case insensitive way. Beware, the genrated bytecode will be
+significantly longer.
+
 Leading and trailing dots are ignored, this commands are equivalent:
 
   %(prog)s example.com fint.me
   %(prog)s .example.com fint.me.
 
-Finally the "--ignorecase" option will produce BPF bytecode that
-matches domains in case insensitive way. Beware, the genrated bytecode
-will be significantly longer.
+A special consideration is given if the suffix is '.**' (dot star
+star). This is interperted as "any suffix", for example this:
+
+  %(prog)s example.**
+
+Will match:
+
+   example.com example.de example.co.uk example.anything.whatsoever
+
+But not:
+
+   www.example.com eexample.com
     ''')
 
     parser.add_argument('-i', '--ignorecase', action='store_true',
@@ -92,11 +105,21 @@ will be significantly longer.
     list_of_rules = []
 
     for domain in args.domains:
-        # remove trailing and leading dots and whitespace
-        domain = domain.strip(".").strip()
+        # remove trailing and leading whitespace
+        domain = domain.strip()
 
-        # keep the trailing dot
-        domain += '.'
+        if domain.endswith('.**'):
+            no_trailing_dot = True
+            domain = domain[:-3]
+        else:
+            no_trailing_dot = False
+
+        # remove trailing and leading dots
+        domain = domain.strip(".")
+
+        # Ensure the trailing dot
+        if not no_trailing_dot:
+            domain += '.'
 
         rule = []
         for part in domain.split("."):
