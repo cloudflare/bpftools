@@ -68,4 +68,4 @@ This is the same as:
     print "nomatch:"
     print "    ret #%i" % (0 if not negate else 1)
 
-    return ''
+    return suffix_hex
