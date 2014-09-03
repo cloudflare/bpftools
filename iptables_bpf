@@ -108,6 +108,8 @@ Usage example:
 '''.strip())
 parser.add_argument('-6', '--inet6', action='store_true',
                     help='generate script for IPv6')
+parser.add_argument('-c', '--comment',
+                    help='Add a comment to better identify this rule in iptables -nvL'),
 parser.add_argument('-i', '--ip', metavar='ip', action='append',
                     help='preset IP in the set')
 parser.add_argument('-n', '--negate', action='store_true',
@@ -151,9 +153,12 @@ else:
     f = open(fname, 'wb')
 
 cmd = sys.argv[1:]
+
+bpf_cmd_s = args.comment if args.comment else ' '.join(cmd).replace('"', "").replace("$", "")
+
 ctx = {
     'bpf_cmd': cmd,
-    'bpf_cmd_s': ' '.join(cmd).replace('"', "").replace("$",""),
+    'bpf_cmd_s': bpf_cmd_s,
     'bytecode': bytecode,
     'assembly': '#    ' + '\n#    '.join(assembly.split('\n')),
     'fname': fname if fname != '-' else name + '.sh',
