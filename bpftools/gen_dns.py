@@ -76,7 +76,7 @@ Leading and trailing dots are ignored, this commands are equivalent:
   %(prog)s example.com fint.me
   %(prog)s .example.com fint.me.
 
-A special consideration is given if the suffix is '.**' (dot star
+A special consideration is given if the suffix is '**' (star
 star). This is interperted as "any suffix", for example this:
 
   %(prog)s example.**
@@ -88,7 +88,7 @@ Will match:
 But not:
 
    www.example.com eexample.com
-    ''')
+''')
 
     parser.add_argument('-i', '--ignorecase', action='store_true',
                         help='match domains in case-insensitive way')
@@ -106,19 +106,17 @@ But not:
 
     for domain in args.domains:
         # remove trailing and leading whitespace
-        domain = domain.strip()
+        domain = domain.strip().lstrip(".")
 
-        if domain.endswith('.**'):
-            no_trailing_dot = True
-            domain = domain[:-3]
+        if domain.endswith('**'):
+            free_suffix = True
+            domain = domain[:-2]
         else:
-            no_trailing_dot = False
-
-        # remove trailing and leading dots
-        domain = domain.strip(".")
+            free_suffix = False
 
         # Ensure the trailing dot
-        if not no_trailing_dot:
+        domain = domain.rstrip(".")
+        if not free_suffix:
             domain += '.'
 
         rule = []
@@ -138,7 +136,11 @@ But not:
                 mask.append( '\xff' )
             elif is_char and args.ignorecase:
                 mask.append( '\x20' )
+            elif not is_char and last and free_suffix:
+                # ignore the length of last part if free_suffix
+                mask.append( '\xff' )
             else:
+                # else, literal matching
                 mask.append( '\x00' )
         mask = ''.join(mask)
         s = ''.join(map(lambda (is_char, b): b, rule))
@@ -206,7 +208,6 @@ But not:
 
     for i, rules in enumerate(list_of_rules):
         print "lb_%i:" % (i,)
-        #print "    ; %r" % (rules,)
         print "    %sldx M[0]" % ('' if i != 0 else '; ')
         for j, rule in enumerate(rules):
             last = (j == len(rules)-1)
