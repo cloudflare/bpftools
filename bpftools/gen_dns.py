@@ -92,15 +92,10 @@ But not:
 
     parser.add_argument('-i', '--ignorecase', action='store_true',
                         help='match domains in case-insensitive way')
-    parser.add_argument('domains', nargs='*',
+    parser.add_argument('domains', nargs='+',
                         help='DNS domain patterns to match on')
 
     args = parser.parse_args(args)
-
-    if not args.domains:
-        parser.print_help()
-        sys.exit(-1)
-
 
     list_of_rules = []
 
