@@ -1,9 +1,10 @@
 BPF Tools
 =========
 
-An introductory blog post:
+Introductory blog posts:
 
-  - http://blog.cloudflare.com/introducing-the-bpf-tools
+  - http://blog.cloudflare.com/bpf-the-forgotten-bytecode/
+  - http://blog.cloudflare.com/introducing-the-bpf-tools/
 
 
 Here you can find a set of tool for analyzing and processing of pcap
