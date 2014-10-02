@@ -59,11 +59,11 @@ def main():
     else:
         readfds = [open(fname, 'rb') for fname in args]
 
-    l3_off = None
-    l3_off_bad = 0
-
     for fd in readfds:
         p = pcappy.open_offline(fd)
+
+        l3_off = None
+        l3_off_bad = 0
 
         while True:
             try:

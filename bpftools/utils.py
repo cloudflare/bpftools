@@ -41,14 +41,16 @@ def bpf_compile(assembly):
 
 
 def _looks_like_ip(l2, off):
-    ipver, _, total_length = struct.unpack_from('!BBH', l2, off)
-    if (ipver & 0xF0 == 0x40 and (ipver & 0x0f) >= 5):
-        return 4
+    if len(l2) - off >= 20:
+        ipver, _, total_length = struct.unpack_from('!BBH', l2, off)
+        if (ipver & 0xF0 == 0x40 and (ipver & 0x0f) >= 5):
+            return 4
 
-    vertos, _, _,  pay_len, proto, ttl = struct.unpack_from('!BBHHBB', l2, off)
-    if (vertos & 0xF0 == 0x60 and pay_len + off + 40 == len(l2)
-        and ttl > 0):
-        return 6
+    if len(l2) - off >= 40:
+        vertos, _, _,  pay_len, proto, ttl = struct.unpack_from('!BBHHBB', l2, off)
+        if (vertos & 0xF0 == 0x60 and pay_len + off + 40 == len(l2)
+            and ttl > 0):
+            return 6
     return None
 
 
