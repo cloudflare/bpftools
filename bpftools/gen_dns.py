@@ -18,7 +18,7 @@ def merge(iterable, merge=lambda a,b:a+b):
 
 ACCEPTABLE_CHARS = set(string.printable) - set(string.whitespace) - set(string.punctuation)
 
-def gen(args, l3_off=0, ipversion=4, negate=False):
+def gen(params, l3_off=0, ipversion=4, negate=False):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog="%s dns --" % (sys.argv[0]),
@@ -95,7 +95,7 @@ But not:
     parser.add_argument('domains', nargs='+',
                         help='DNS domain patterns to match on')
 
-    args = parser.parse_args(args)
+    args = parser.parse_args(params)
 
     list_of_rules = []
 
@@ -231,4 +231,3 @@ But not:
                                       for c in part) )
         name_parts.append( '_'.join(parts) )
     return '_'.join(name_parts)
-

@@ -57,7 +57,10 @@ are clear supply "--strict" flag.
     print
 
     print "    ; allow only flags:"
+    # rfc6840 says CD should always be set
     print "    ;   4: checking_disabled"
+    # and AD might be set on queries:
+    #   http://tools.ietf.org/html/rfc6840#page-10
     print "    ;   5: authenticated_data"
     flags = 0xffff
     flags &= ~(1 << 4)
