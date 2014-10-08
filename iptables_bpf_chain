@@ -91,9 +91,10 @@ parser = argparse.ArgumentParser(
     description=r'''
 
 This program generates a bash script. The script when run will insert
-(or remove) an iptable chain and ipset. The iptable chain drops
+(or remove) an iptables chain and ipset. The iptable chain ACCEPTs
 traffic that matches requests with domains given with "--accept"
-options and drops domains listed with "--drop" option. Example:
+options and DROPs packets matching domains listed with "--drop"
+option. Example:
 
   %(prog)s -a www.example.com -a ns1.example.com -d *.example.com -w example_com
 
