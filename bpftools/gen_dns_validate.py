@@ -62,9 +62,11 @@ are clear supply "--strict" flag.
     # and AD might be set on queries:
     #   http://tools.ietf.org/html/rfc6840#page-10
     print "    ;   5: authenticated_data"
+    print "    ;   6: zflag"
     flags = 0xffff
     flags &= ~(1 << 4)
     flags &= ~(1 << 5)
+    flags &= ~(1 << 6)
     if not args.strict:
         print "    ;   8: recursion_desired"
         print "    ;   9: recursion_available"
