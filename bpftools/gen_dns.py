@@ -1,5 +1,6 @@
 import argparse
 import itertools
+import re
 import string
 import struct
 import sys
@@ -88,6 +89,15 @@ Will match:
 But not:
 
    www.example.com eexample.com
+
+Wildcard matches can specify ranges, for example
+
+  %(prog)s *{4-255}.example.com
+
+will match any subdomains of example.com of 4 and more
+characters. Only a syntax with explicit minimum and maximum is
+supported.
+
 ''')
 
     parser.add_argument('-i', '--ignorecase', action='store_true',
@@ -116,8 +126,10 @@ But not:
 
         rule = []
         for part in domain.split("."):
-            if part == '*':
-                rule.append( (False, '*') )
+            matchstar = re.match('^[*]({(?P<min>\d+)-(?P<max>\d+)})?$',
+                                 part)
+            if matchstar:
+                rule.append( (False, matchstar.groupdict()) )
             else:
                 rule.append( (True, [(False, chr(len(part)))] \
                                   + [(True, c) for c in part]) )
@@ -180,9 +192,22 @@ But not:
             print "    add #%i" % (off,)
             print "    tax"
 
-    def match_star():
-        print "    ; Match: *"
+    def match_star(mdict, label):
+        mi, ma = mdict['min'], mdict['max']
+        if not(mi and ma):
+            print "    ; Match: *"
+        else:
+            mi, ma = int(mi), int(ma)
+            print "    ; Match: *{%s-%s}" % (mi, ma)
         print "    ldb [x + 0]"
+        if mi or ma:
+            if mi == ma and mi > 0 and ma < 255:
+                print "    jneq #%s, %s" % (mi, label,)
+            else:
+                if mi > 0:
+                    print "    jlt #%s, %s" % (mi, label,)
+                if ma < 255:
+                    print "    jgt #%s, %s" % (ma, label,)
         print "    add x"
         print "    add #1"
         print "    tax"
@@ -206,10 +231,11 @@ But not:
         print "    %sldx M[0]" % ('' if i != 0 else '; ')
         for j, rule in enumerate(rules):
             last = (j == len(rules)-1)
-            if rule != '*':
-                match_exact(rule, 'lb_%i' % (i+1,), last)
+            label = 'lb_%i' % (i+1,)
+            if not isinstance(rule, dict):
+                match_exact(rule, label, last)
             else:
-                match_star()
+                match_star(rule, label)
         print "    ret #%i" % (1 if not negate else 0)
         print
 
