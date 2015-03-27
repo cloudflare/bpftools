@@ -6,7 +6,7 @@ def gen(params, l3_off=0, ipversion=4, negate=False):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog="%s dns_badrand --" % (sys.argv[0]),
-        description=r''' 
+        description=r'''
 
 Generate raw BPF rules that match packets formed with predicitable (non)random fields.
 In some specific packets, the IP Identifier field could have the value of thebyte swaped 
@@ -27,7 +27,7 @@ TCP/UDP Source port. This is what is detected by this BPF rule.
 
         print "ldh [%i]" % (l3_off + 4)         # Loading IP identifier into A
         print "xor x"                           # Xoring A and X (Port and IP ID)
-        print "jeq #0x0, match" 
+        print "jeq #0x0, match"
         print "ret #%i" % (0 if not negate else 1)
         print "match:"
         print "ret #%i" % (1 if not negate else 0)
