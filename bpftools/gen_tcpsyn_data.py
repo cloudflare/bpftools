@@ -32,8 +32,7 @@ Ble
     print "and #0x12" #00010010 : only ACK and SYN bits matter
     # Total frame length - IP header length = TCP data offset
 
-    print "jeq #0x12, nonmatch" #Error if value is 00010010 (ACK + SYN)
-    print "jneq #0x2, nonmatch" #Error if value is 0 or 00010000 and accept if 10
+    print "jneq #0x2, nonmatch" #Error if value is 0 or 00010000 or 00010010 
     
     print "ld M[%i]" % (1)
     print "sub x" #result in A
