@@ -6,6 +6,7 @@ from . import gen_dns
 from . import gen_dns_validate
 from . import gen_suffix
 from . import utils
+from . import gen_badrand
 from . import gen_tcpsyn_data
 
 name_to_gen = {
