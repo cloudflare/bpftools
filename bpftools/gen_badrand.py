@@ -5,12 +5,13 @@ import sys
 def gen(params, l3_off=0, ipversion=4, negate=False):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        prog="%s dns_badrand --" % (sys.argv[0]),
+        prog="%s badrand --" % (sys.argv[0]),
         description=r'''
 
-Generate raw BPF rules that match packets formed with predicitable (non)random fields.
-In some specific packets, the IP Identifier field could have the value of thebyte swaped 
-TCP/UDP Source port. This is what is detected by this BPF rule.
+Generate raw BPF rules that match packets formed with predicitable
+(non)random fields.  In some specific packets, the IP Identifier field
+could have the value of thebyte swaped TCP/UDP Source port. This is
+what is detected by this BPF rule.
 
 ''')
 
