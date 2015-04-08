@@ -6,14 +6,13 @@ from . import gen_dns
 from . import gen_dns_validate
 from . import gen_suffix
 from . import utils
-from . import gen_dns_badrand
 from . import gen_tcpsyn_data
 
 name_to_gen = {
     'dns': gen_dns.gen,
     'dns_validate': gen_dns_validate.gen,
     'suffix': gen_suffix.gen,
-    'dns_badrand': gen_dns_badrand.gen,
+    'badrand': gen_badrand.gen,
     'tcpsyn_data': gen_tcpsyn_data.gen,
     }
 
