@@ -35,7 +35,7 @@ what is detected by this BPF rule.
         print "    ; Load IPID into A"
         print "    ldh [%i]" % (l3_off + 4,)         # Loading IP identifier into A
         print "    ; Compare with X"
-        print "    xor x"                           # Xoring A and X (Port and IP ID)
+        print "    sub x"
         print "    ; If the result is equal to 0 it means IP ID is equal to the byte swaped port"
         print "    jeq #0x0, match"
         print "    ret #%i" % (0 if not negate else 1,)
