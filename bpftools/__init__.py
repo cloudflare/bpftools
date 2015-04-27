@@ -8,6 +8,7 @@ from . import gen_suffix
 from . import utils
 from . import gen_badrand
 from . import gen_tcpsyn_data
+from . import gen_tcpdump
 
 name_to_gen = {
     'dns': gen_dns.gen,
@@ -15,6 +16,7 @@ name_to_gen = {
     'suffix': gen_suffix.gen,
     'badrand': gen_badrand.gen,
     'tcpsyn_data': gen_tcpsyn_data.gen,
+    'tcpdump': gen_tcpdump.gen,
     }
 
 generator_names = name_to_gen.keys()

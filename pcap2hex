@@ -87,6 +87,8 @@ def main():
 
             if normalize and l3_off in (16,):
                 data = data[2:]
+            if normalize and l3_off in (18,):
+                data = data[0:12] + data[16:]
 
             h = data.encode('hex')
             if not ascii:
