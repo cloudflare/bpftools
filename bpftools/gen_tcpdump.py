@@ -1,10 +1,10 @@
 import argparse
 import os
-import pcappy
 import re
 import subprocess
 import sys
 
+from . import linktypes
 
 FAKE_PCAP="d4 c3 b2 a1 02 00 04 00  00 00 00 00 00 00 00 00  00 00 01 00 %02x 00 00 00".replace(' ','')
 
@@ -48,16 +48,16 @@ shelling out to tcpdump.
     vlan = False
     if l3_off == 0:
         if ipversion == 4:
-            lt = pcappy.LINKTYPE_IPV4
+            lt = linktypes.LINKTYPE_IPV4
         if ipversion == 6:
-            lt = pcappy.LINKTYPE_IPV6
+            lt = linktypes.LINKTYPE_IPV6
     elif l3_off == 14:
-        lt = pcappy.LINKTYPE_ETHERNET
+        lt = linktypes.LINKTYPE_ETHERNET
     elif l3_off == 16:
-        lt = pcappy.LINKTYPE_LINUX_SLL
+        lt = linktypes.LINKTYPE_LINUX_SLL
     elif l3_off == 18:
         vlan = True
-        lt = pcappy.LINKTYPE_ETHERNET
+        lt = linktypes.LINKTYPE_ETHERNET
     else:
         assert False, 'l3_off of %d not supported' % (l3_off,)
 
