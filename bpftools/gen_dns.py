@@ -107,6 +107,8 @@ supported.
 
     args = parser.parse_args(params)
 
+    free_suffix = False
+
     list_of_rules = []
 
     for domain in args.domains:
@@ -116,22 +118,28 @@ supported.
         if domain.endswith('**'):
             free_suffix = True
             domain = domain[:-2]
+
+        if free_suffix and domain.endswith("."):
+            exact_free_suffix = True
         else:
-            free_suffix = False
+            exact_free_suffix = False
 
         # Ensure the trailing dot
         domain = domain.rstrip(".")
         if not free_suffix:
             domain += '.'
 
+        parts = domain.split(".")
         rule = []
-        for part in domain.split("."):
+        for i, part in enumerate(parts):
             matchstar = re.match('^[*]({(?P<min>\d+)-(?P<max>\d+)})?$',
                                  part)
+            is_char = (len(parts)-1 == i) and exact_free_suffix
+
             if matchstar:
                 rule.append( (False, matchstar.groupdict()) )
             else:
-                rule.append( (True, [(False, chr(len(part)))] \
+                rule.append( (True, [(is_char, chr(len(part)))] \
                                   + [(True, c) for c in part]) )
 
         list_of_rules.append( list(merge(rule)) )
