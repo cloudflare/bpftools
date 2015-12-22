@@ -73,6 +73,7 @@ shelling out to tcpdump.
     print
     for line in code.split('\n'):
         lno, _ , rest = line.partition(" ")
+        rest = rest.replace("#pktlen", "#len")
         lno = int(lno[1:-1])
         print "l%03d:" % (lno,)
         m = re.match("^(?P<prefix>.*)\s+jt (?P<jt>\d+)\s+jf (?P<jf>\d+)$", rest)
