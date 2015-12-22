@@ -129,11 +129,13 @@ supported.
         for i, part in enumerate(parts):
             matchstar = re.match('^[*]({(?P<min>\d+)-(?P<max>\d+)})?$', part)
 
+            is_last = len(parts) - 1 == i
+
             # is_char is used to determine whether a particular byte is
             # a normal char or not. For the domain part length byte we
             # set it to False, or to None to signify that the length
             # should be masked and ignored.
-            if free_suffix:
+            if is_last and free_suffix:
                 len_is_char = None
             else:
                 len_is_char = False
