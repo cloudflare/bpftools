@@ -119,6 +119,11 @@ supported.
         else:
             free_suffix = False
 
+        if free_suffix and domain.endswith("."):
+            exact_free_suffix = True
+        else:
+            exact_free_suffix = False
+
         # Ensure the trailing dot
         domain = domain.rstrip(".")
         if not free_suffix:
@@ -135,7 +140,7 @@ supported.
             # a normal char or not. For the domain part length byte we
             # set it to False, or to None to signify that the length
             # should be masked and ignored.
-            if is_last and free_suffix:
+            if is_last and free_suffix and not exact_free_suffix:
                 len_is_char = None
             else:
                 len_is_char = False
