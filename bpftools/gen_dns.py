@@ -119,19 +119,36 @@ supported.
         else:
             free_suffix = False
 
+        if free_suffix and domain.endswith("."):
+            exact_free_suffix = True
+        else:
+            exact_free_suffix = False
+
         # Ensure the trailing dot
         domain = domain.rstrip(".")
         if not free_suffix:
             domain += '.'
 
+        parts = domain.split(".")
         rule = []
-        for part in domain.split("."):
-            matchstar = re.match('^[*]({(?P<min>\d+)-(?P<max>\d+)})?$',
-                                 part)
+        for i, part in enumerate(parts):
+            matchstar = re.match('^[*]({(?P<min>\d+)-(?P<max>\d+)})?$', part)
+
+            is_last = len(parts) - 1 == i
+
+            # is_char is used to determine whether a particular byte is
+            # a normal char or not. For the domain part length byte we
+            # set it to False, or to None to signify that the length
+            # should be masked and ignored.
+            if is_last and free_suffix and not exact_free_suffix:
+                len_is_char = None
+            else:
+                len_is_char = False
+
             if matchstar:
                 rule.append( (False, matchstar.groupdict()) )
             else:
-                rule.append( (True, [(False, chr(len(part)))] \
+                rule.append( (True, [(len_is_char, chr(len(part)))] \
                                   + [(True, c) for c in part]) )
 
         list_of_rules.append( list(merge(rule)) )
@@ -143,7 +160,7 @@ supported.
                 mask.append( '\xff' )
             elif is_char and args.ignorecase:
                 mask.append( '\x20' )
-            elif not is_char and last and free_suffix:
+            elif is_char is None and last:
                 # ignore the length of last part if free_suffix
                 mask.append( '\xff' )
             else:
