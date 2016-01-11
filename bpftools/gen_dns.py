@@ -253,11 +253,11 @@ supported.
                 match_exact(rule, label, last)
             else:
                 match_star(rule, label)
-        print "    ret #%i" % (1 if not negate else 0)
+        print "    ret #%i" % (65535 if not negate else 0)
         print
 
     print "lb_%i:" % (i+1,)
-    print "    ret #%i" % (0 if not negate else 1)
+    print "    ret #%i" % (0 if not negate else 65535)
 
     name_parts = []
     for domain in args.domains:

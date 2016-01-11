@@ -63,9 +63,9 @@ This is the same as:
             print "    ldb [x + %i]" % off
             print "    jneq #0x%02x, nomatch" % (m, )
             off += 1
-    print "    ret #%i" % (1 if not negate else 0)
+    print "    ret #%i" % (65535 if not negate else 0)
     print ""
     print "nomatch:"
-    print "    ret #%i" % (0 if not negate else 1)
+    print "    ret #%i" % (0 if not negate else 65535)
 
     return suffix_hex
