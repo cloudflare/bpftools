@@ -28,13 +28,18 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
+#ifdef __linux__
 #include "linux/filter.h"
+#else
+#include <net/bpf.h>
+#endif
 
 #include "bpf_exp.yacc.h"
 
 enum jmp_type { JTL, JFL, JKL };
 
 extern FILE *yyin;
+extern int yylineno;
 extern int yylex(void);
 extern void yyerror(const char *str);
 
@@ -42,6 +47,26 @@ extern void bpf_asm_compile(FILE *fp, bool cstyle);
 static void bpf_set_curr_instr(uint16_t op, uint8_t jt, uint8_t jf, uint32_t k);
 static void bpf_set_curr_label(char *label);
 static void bpf_set_jmp_label(char *label, enum jmp_type type);
+static void bpf_err_insn();
+static void bpf_err_var();
+
+#ifdef SKF_AD_OFF
+#define COND_VAR(x) x
+#else
+#define COND_VAR(x) bpf_err_var()
+#endif
+
+#ifdef BPF_XOR
+#define COND_XOR(x) x
+#else
+#define COND_XOR(x) bpf_err_insn()
+#endif
+
+#ifdef BPF_MOD
+#define COND_MOD(x) x
+#else
+#define COND_MOD(x) bpf_err_insn()
+#endif
 
 %}
 
@@ -126,44 +151,44 @@ ldb
 	| OP_LDB '[' number ']' {
 		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0, $3); }
 	| OP_LDB K_PROTO {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_PROTOCOL); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_PROTOCOL)); }
 	| OP_LDB K_TYPE {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_PKTTYPE); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_PKTTYPE)); }
 	| OP_LDB K_IFIDX {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_IFINDEX); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_IFINDEX)); }
 	| OP_LDB K_NLATTR {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_NLATTR); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_NLATTR)); }
 	| OP_LDB K_NLATTR_NEST {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_NLATTR_NEST); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_NLATTR_NEST)); }
 	| OP_LDB K_MARK {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_MARK); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_MARK)); }
 	| OP_LDB K_QUEUE {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_QUEUE); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_QUEUE)); }
 	| OP_LDB K_HATYPE {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_HATYPE); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_HATYPE)); }
 	| OP_LDB K_RXHASH {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_RXHASH); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_RXHASH)); }
 	| OP_LDB K_CPU {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_CPU); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_CPU)); }
 	| OP_LDB K_VLANT {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_VLAN_TAG); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_VLAN_TAG)); }
 	| OP_LDB K_VLANP {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT)); }
 	| OP_LDB K_POFF {
-		bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_PAY_OFFSET); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_B | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_PAY_OFFSET)); }
 	;
 
 ldh
@@ -174,44 +199,44 @@ ldh
 	| OP_LDH '[' number ']' {
 		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0, $3); }
 	| OP_LDH K_PROTO {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_PROTOCOL); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_PROTOCOL)); }
 	| OP_LDH K_TYPE {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_PKTTYPE); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_PKTTYPE)); }
 	| OP_LDH K_IFIDX {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_IFINDEX); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_IFINDEX)); }
 	| OP_LDH K_NLATTR {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_NLATTR); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_NLATTR)); }
 	| OP_LDH K_NLATTR_NEST {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_NLATTR_NEST); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_NLATTR_NEST)); }
 	| OP_LDH K_MARK {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_MARK); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_MARK)); }
 	| OP_LDH K_QUEUE {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_QUEUE); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_QUEUE)); }
 	| OP_LDH K_HATYPE {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_HATYPE); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_HATYPE)); }
 	| OP_LDH K_RXHASH {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_RXHASH); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_RXHASH)); }
 	| OP_LDH K_CPU {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_CPU); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_CPU)); }
 	| OP_LDH K_VLANT {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_VLAN_TAG); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_VLAN_TAG)); }
 	| OP_LDH K_VLANP {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT)); }
 	| OP_LDH K_POFF {
-		bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_PAY_OFFSET); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_H | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_PAY_OFFSET)); }
 	;
 
 ldi
@@ -227,44 +252,44 @@ ld
 	| OP_LD K_PKT_LEN {
 		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_LEN, 0, 0, 0); }
 	| OP_LD K_PROTO {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_PROTOCOL); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_PROTOCOL)); }
 	| OP_LD K_TYPE {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_PKTTYPE); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_PKTTYPE)); }
 	| OP_LD K_IFIDX {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_IFINDEX); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_IFINDEX)); }
 	| OP_LD K_NLATTR {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_NLATTR); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_NLATTR)); }
 	| OP_LD K_NLATTR_NEST {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_NLATTR_NEST); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_NLATTR_NEST)); }
 	| OP_LD K_MARK {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_MARK); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_MARK)); }
 	| OP_LD K_QUEUE {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_QUEUE); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_QUEUE)); }
 	| OP_LD K_HATYPE {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_HATYPE); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_HATYPE)); }
 	| OP_LD K_RXHASH {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_RXHASH); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_RXHASH)); }
 	| OP_LD K_CPU {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_CPU); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_CPU)); }
 	| OP_LD K_VLANT {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_VLAN_TAG); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_VLAN_TAG)); }
 	| OP_LD K_VLANP {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT)); }
 	| OP_LD K_POFF {
-		bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
-				   SKF_AD_OFF + SKF_AD_PAY_OFFSET); }
+		COND_VAR(bpf_set_curr_instr(BPF_LD | BPF_W | BPF_ABS, 0, 0,
+				   SKF_AD_OFF + SKF_AD_PAY_OFFSET)); }
 	| OP_LD 'M' '[' number ']' {
 		bpf_set_curr_instr(BPF_LD | BPF_MEM, 0, 0, $4); }
 	| OP_LD '[' 'x' '+' number ']' {
@@ -489,11 +514,11 @@ div
 
 mod
 	: OP_MOD '#' number {
-		bpf_set_curr_instr(BPF_ALU | BPF_MOD | BPF_K, 0, 0, $3); }
+		COND_MOD(bpf_set_curr_instr(BPF_ALU | BPF_MOD | BPF_K, 0, 0, $3)); }
 	| OP_MOD 'x' {
-		bpf_set_curr_instr(BPF_ALU | BPF_MOD | BPF_X, 0, 0, 0); }
+		COND_MOD(bpf_set_curr_instr(BPF_ALU | BPF_MOD | BPF_X, 0, 0, 0)); }
 	| OP_MOD '%' 'x' {
-		bpf_set_curr_instr(BPF_ALU | BPF_MOD | BPF_X, 0, 0, 0); }
+		COND_MOD(bpf_set_curr_instr(BPF_ALU | BPF_MOD | BPF_X, 0, 0, 0)); }
 	;
 
 neg
@@ -521,11 +546,11 @@ or
 
 xor
 	: OP_XOR '#' number {
-		bpf_set_curr_instr(BPF_ALU | BPF_XOR | BPF_K, 0, 0, $3); }
+		COND_XOR(bpf_set_curr_instr(BPF_ALU | BPF_XOR | BPF_K, 0, 0, $3)); }
 	| OP_XOR 'x' {
-		bpf_set_curr_instr(BPF_ALU | BPF_XOR | BPF_X, 0, 0, 0); }
+		COND_XOR(bpf_set_curr_instr(BPF_ALU | BPF_XOR | BPF_X, 0, 0, 0)); }
 	| OP_XOR '%' 'x' {
-		bpf_set_curr_instr(BPF_ALU | BPF_XOR | BPF_X, 0, 0, 0); }
+		COND_XOR(bpf_set_curr_instr(BPF_ALU | BPF_XOR | BPF_X, 0, 0, 0)); }
 	;
 
 lsh
@@ -572,7 +597,11 @@ txa
 %%
 
 static int curr_instr = 0;
+#ifdef __linux
 static struct sock_filter out[BPF_MAXINSNS];
+#else
+static struct bpf_insn out[BPF_MAXINSNS];
+#endif
 static char **labels, **labels_jt, **labels_jf, **labels_k;
 
 static void bpf_assert_max(void)
@@ -738,6 +767,16 @@ static void bpf_destroy(void)
 	free(labels);
 }
 
+static void bpf_err_insn(void)
+{
+	yyerror("unsupported instruction");
+}
+
+static void bpf_err_var(void)
+{
+	yyerror("unsupported variable");
+}
+
 void bpf_asm_compile(FILE *fp, bool cstyle)
 {
 	yyin = fp;
@@ -758,5 +797,6 @@ void bpf_asm_compile(FILE *fp, bool cstyle)
 
 void yyerror(const char *str)
 {
+	fprintf(stderr, "error: %s at line %d\n", str, yylineno);
 	exit(1);
 }

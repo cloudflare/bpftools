@@ -8,9 +8,16 @@ YACC = bison
 	$(YACC) -o $@ -d $<
 
 %.lex.c: %.l
-	$(LEX) -o $@ $<
+	$(LEX) -o$@ $<
 
-all : bpf_jit_disasm bpf_dbg bpf_asm
+TARGETS = bpf_asm
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	TARGETS += bpf_jit_asm bpf_dbg
+endif
+
+all : $(TARGETS)
 
 bpf_jit_disasm : CFLAGS = -Wall -O2 -DPACKAGE='bpf_jit_disasm' -I.
 bpf_jit_disasm : LDLIBS = -lopcodes -lbfd -ldl
