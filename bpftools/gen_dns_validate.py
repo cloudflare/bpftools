@@ -84,10 +84,10 @@ are clear supply "--strict" flag.
     print "    jneq #0x0, match"
     print "    ldh [x + 10]       ; arcount must be 0 or 1"
     print "    jgt #0x1, match"
-    print "    ret #%i" % (0 if not negate else 1)
+    print "    ret #%i" % (0 if not negate else 65535)
     print
     print "match:"
-    print "    ret #%i" % (1 if not negate else 0)
+    print "    ret #%i" % (65535 if not negate else 0)
 
     if args.strict:
         return 'strict'

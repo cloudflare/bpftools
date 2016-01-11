@@ -38,12 +38,12 @@ what is detected by this BPF rule.
         print "    sub x"
         print "    ; If the result is equal to 0 it means IP ID is equal to the byte swaped port"
         print "    jeq #0x0, match"
-        print "    ret #%i" % (0 if not negate else 1,)
+        print "    ret #%i" % (0 if not negate else 65535,)
         print "match:"
-        print "    ret #%i" % (1 if not negate else 0,)
+        print "    ret #%i" % (65535 if not negate else 0,)
 
     if ipversion == 6:
         print "    ; ipv6 not supported, no ipid. Never match"
-        print "    ret #%i" % (0 if not negate else 1,)
+        print "    ret #%i" % (0 if not negate else 65535,)
 
     return ''

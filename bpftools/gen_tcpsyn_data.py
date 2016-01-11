@@ -72,10 +72,10 @@ SYN must be set and ACK must be clear. Other flags are ignored.
     print "    jeq #0x0, nonmatch" 			# If is 0 it does not match, the packet is valid
 
     print "match:"
-    print "    ret #%i" % (1 if not negate else 0)
+    print "    ret #%i" % (65535 if not negate else 0)
 
     print "nonmatch:"
-    print "    ret #%i" % (0 if not negate else 1)
+    print "    ret #%i" % (0 if not negate else 65535)
 
     return ''
 
