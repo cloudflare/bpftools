@@ -32,7 +32,7 @@ def bpf_from_expr(expr, linktype):
 def gen(params, l3_off=0, ipversion=4, negate=False):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        prog="%s badrand --" % (sys.argv[0]),
+        prog="%s tcpdump --" % (sys.argv[0]),
         description=r'''
 
 Generate bpf using tcpdump pcap compiler. Sadly for now it's done by
