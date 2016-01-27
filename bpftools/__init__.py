@@ -6,14 +6,12 @@ from . import gen_dns
 from . import gen_dns_validate
 from . import gen_suffix
 from . import utils
-from . import gen_tcpsyn_data
 from . import gen_tcpdump
 
 name_to_gen = {
     'dns': gen_dns.gen,
     'dns_validate': gen_dns_validate.gen,
     'suffix': gen_suffix.gen,
-    'tcpsyn_data': gen_tcpsyn_data.gen,
     'tcpdump': gen_tcpdump.gen,
     }
 
