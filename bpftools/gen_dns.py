@@ -4,6 +4,7 @@ import re
 import string
 import struct
 import sys
+import urllib
 
 
 # Accepts list of tuples [(mergeable, value)] and merges fields where
@@ -133,6 +134,7 @@ supported.
         rule = []
         for i, part in enumerate(parts):
             matchstar = re.match('^[*]({(?P<min>\d+)-(?P<max>\d+)})?$', part)
+            part = urllib.unquote(part)
 
             is_last = len(parts) - 1 == i
 
