@@ -100,9 +100,10 @@ def parsedns(raw):
         print '              hdl: 0x%02x' % ((v_len & 0x0f),)
         print '            ip_id: 0x%04x' % (ip_id,)
         print '         fragment: 0x%04x' % (fragment,)
+        print '              ttl: 0x%02x (%d)' % (ttl, ttl)
         print '         protocol: 0x%02x' % (protocol,)
-        print '           source: %s' % (socket.inet_ntoa(l3[12:16]),)
-        print '      destination: %s' % (socket.inet_ntoa(l3[16:20]),)
+        print '           source: 0x%s %s' % (l3[12:16].encode('hex'), socket.inet_ntoa(l3[12:16]))
+        print '      destination: 0x%s %s' % (l3[16:20].encode('hex'), socket.inet_ntoa(l3[16:20]))
         if ip_extra:
             print '         ip_extra: %s' % (ip_extra.encode('hex'),)
     elif v_len & 0xf0 == 0x60:
@@ -126,7 +127,7 @@ def parsedns(raw):
 
     spt, dpt, l4len, _checksum = struct.unpack_from('!HHHH', l4)
 
-    print '      source port: %s' % (spt,)
+    print '      source port: 0x%04x (%s)' % (spt, spt)
     print ' destination port: %s' % (dpt,)
     print '           length: %s' % (l4len,)
 

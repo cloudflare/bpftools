@@ -4,7 +4,8 @@ import subprocess
 import sys
 
 from pkg_resources import resource_filename
-
+from binascii import hexlify
+from binascii import unhexlify
 
 def find_binary(prefixes, name, args):
     for prefix in prefixes:
@@ -69,19 +70,79 @@ def find_ip_offset(l2, max_off=40):
 
     return None
 
+def scrub_byte(data, minval, maxval, ip_constant):
+    if not (ord(data) >= minval and ord(data) < maxval):
+        return data
+    ip_byte_str = hexlify(data)
+    ip_byte_int = int(ip_byte_str, 16)
+    ip_byte_int = ip_byte_int - minval
+    obfuscated_byte = (ip_byte_int + ip_constant) % (maxval-minval)
+    obfuscated_byte = obfuscated_byte + minval
+    obfuscated_str = format(obfuscated_byte,'x')
+    if len(obfuscated_str) == 1:
+        obfuscated_str = "0" + obfuscated_str
+    obfuscated_str = unhexlify(obfuscated_str.rstrip(b"\n"))
+    return obfuscated_str
 
-def do_scrub(l2, off):
+def scrub_dns_name(data, ip_ihl, ip_hdr_off, entropy):
+    # UDP
+    dns_hdr_off = ip_ihl + ip_hdr_off + 8 # 8 is UDP header size
+    str_len_offset = 0
+    name_offset = 0
+    while True:
+        try:
+            str_len_off = ord(data[dns_hdr_off + 12 + name_offset]) # 12 is the offset inside the DNS packet
+        except IndexError:
+             print >> sys.stderr, "OOps, it seems this UDP packet is not properly formed DNS, break while True"
+             break
+        if str_len_off == 0:
+            break
+        idx = 0
+        while idx < str_len_off:
+            try:
+                rtr = data[dns_hdr_off + 12 + name_offset + idx + 1]
+            except IndexError:
+                print >> sys.stderr, "OOps, it seems this UDP packet is not properly formed DNS, break while idx"
+                break
+            rtr = scrub_byte(rtr, ord('a'), ord('z') + 1, entropy[name_offset % len(entropy)])
+            rtr = scrub_byte(rtr, ord('A'), ord('Z') + 1, entropy[name_offset % len(entropy)])
+            rtr = scrub_byte(rtr, ord('0'), ord('9') + 1, entropy[name_offset % len(entropy)])
+            data[dns_hdr_off + 12 + name_offset + idx + 1] = rtr
+            idx = idx + 1
+        name_offset = name_offset + str_len_off + 1
+
+
+def do_scrub(l2, ip_hdr_off):
+    entropy = [11,2,9,7,5,10,17,19,1,3,15]
+
     data = list(l2)
-    if off not in (14, 16):
-        raise Exception("off=%i Not ethernet, not sure how to scrub MACS" % off)
-    for i in xrange(off-2):
+    if ip_hdr_off == 18:
+        #Ethernet with vlan
+        data[12] = '\x08'
+        data[13] = '\x00'
+        del data[14:18]
+        ip_hdr_off = 14
+
+    if ip_hdr_off not in (14, 16):
+        raise Exception("ip_hdr_off=%i Not ethernet, not sure how to scrub MACS" % ip_hdr_off)
+    for i in xrange(ip_hdr_off-2):
         data[i] = '\x00'
 
-    ipver = ord(data[off])
-    if ipver & 0xF0 == 0x40:
-        for i in xrange(off+12, off+12+4+4):
-            data[i] = '\x00'
+    ipver = ord(data[ip_hdr_off])
+    if ipver & 0xF0 == 0x40: 
+        # IPV4
+        # Scrubing IPs
+        ip_ihl = (ipver & 0x0F)*4
+        for i in xrange(ip_hdr_off+12, ip_hdr_off+12+4+4, 1):
+            data[i] = scrub_byte(data[i], 0, 256, entropy[i % len(entropy)])
+        if ord(data[ip_hdr_off+9]) == 0x11:
+            # UDP
+            scrub_dns_name(data, ip_ihl, ip_hdr_off, entropy)
     elif ipver & 0xF0 == 0x60:
-        for i in xrange(off+8, off+8+16+16):
-            data[i] = '\x00'
+        # IPV6
+        for i in xrange(ip_hdr_off+8, ip_hdr_off+8+16+16, 1):
+            data[i] = scrub_byte(data[i], 0, 256, entropy[i % len(entropy)])
+        if ord(data[ip_hdr_off+6]) == 0x11:
+            # UDP
+            scrub_dns_name(data, 40, ip_hdr_off, entropy)
     return ''.join(data)
