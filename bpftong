@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+
+"""
+script to convert the compiled output from bpf_asm
+into a format compatible with FreeBSD's ng_bpf
+"""
+
+import sys
+
+def insn(x):
+  return "{ code=%s jt=%s jf=%s k=%s }" % tuple(x.split(' '))
+
+bpf = "".join(sys.stdin).split(',')
+
+len = int(bpf[0])
+prog = " ".join(map(insn, bpf[1:len + 1]))
+print "bpf_prog_len=%d bpf_prog=[%s]" % (len, prog)
