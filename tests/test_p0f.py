@@ -161,7 +161,7 @@ class TestP0f(unittest.TestCase):
         p0f_str = "4:255-:*:*:*,*:mss,nop,sok,eol::*"
         self._test_p0f(packet, p0f_str, False)
 
-    def test_olayoyt_data_off(self):
+    def test_olayout_data_off(self):
         # 3, 4 and 5 nops
         packet = Ether() / IP() / TCP(options=[('NOP', ''), ('NOP', ''), ('NOP', ''), ('NOP', ''), ('NOP', '')])
         p0f_str = "4:255-:*:*:*,*:nop,nop,nop,nop,nop::*"
@@ -206,7 +206,7 @@ class TestP0f(unittest.TestCase):
         p0f_str = "6:255-:*:*:*,*:mss,nop,sok,eol::*"
         self._test_p0f(packet, p0f_str, False)
 
-    def test_olayoyt_data_off_ipv6(self):
+    def test_olayout_data_off_ipv6(self):
         # 3, 4 and 5 nops
         packet = Ether() / IPv6() / TCP(options=[('NOP', ''), ('NOP', ''), ('NOP', ''), ('NOP', ''), ('NOP', '')])
         p0f_str = "6:255-:*:*:*,*:nop,nop,nop,nop,nop::*"
