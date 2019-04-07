@@ -79,7 +79,7 @@ Leading and trailing dots are ignored, this commands are equivalent:
   %(prog)s .example.com fint.me.
 
 A special consideration is given if the suffix is '**' (star
-star). This is interperted as "any suffix", for example this:
+star). This is interpreted as "any suffix", for example this:
 
   %(prog)s example.**
 
