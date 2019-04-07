@@ -471,7 +471,7 @@ class TestP0f(unittest.TestCase):
         p0f_str = "4:255-:*:*:*,*:ws:exws:*"
         self._test_p0f(packet, p0f_str, True)
 
-        # ws is not exceding 14
+        # ws is not exceeding 14
         packet = Ether() / IP() / TCP(options=[('WScale', 1)])
         p0f_str = "4:255-:*:*:*,*:ws:exws:*"
         self._test_p0f(packet, p0f_str, False)
@@ -481,7 +481,7 @@ class TestP0f(unittest.TestCase):
         p0f_str = "6:255-:*:*:*,*:ws:exws:*"
         self._test_p0f(packet, p0f_str, True)
 
-        # ws is not exceding 14
+        # ws is not exceeding 14
         packet = Ether() / IPv6() / TCP(options=[('WScale', 1)])
         p0f_str = "6:255-:*:*:*,*:ws:exws:*"
         self._test_p0f(packet, p0f_str, False)
