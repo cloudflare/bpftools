@@ -53,7 +53,7 @@ subdomain: "*xxx.example.com" is treated as a literal star, so is
 "xxx*.example.com". On the other hand "xxx.*.example.com" will have a
 wildcard meaning.
 
-Question mark '?' matches exactly one characer. For example this rule:
+Question mark '?' matches exactly one character. For example this rule:
 
   %(prog)s fin?.me
 
