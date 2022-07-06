@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import StringIO as stringio
 import os
 import sys
