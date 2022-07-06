@@ -131,7 +131,7 @@ def do_scrub(l2, ip_hdr_off):
     ipver = ord(data[ip_hdr_off])
     if ipver & 0xF0 == 0x40: 
         # IPV4
-        # Scrubing IPs
+        # Scrubbing IPs
         ip_ihl = (ipver & 0x0F)*4
         for i in xrange(ip_hdr_off+12, ip_hdr_off+12+4+4, 1):
             data[i] = scrub_byte(data[i], 0, 256, entropy[i % len(entropy)])
