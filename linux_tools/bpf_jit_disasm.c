@@ -67,7 +67,7 @@ static void get_asm_insns(uint8_t *image, size_t len, unsigned long base,
 
 	disassemble_init_for_target(&info);
 
-	disassemble = disassembler(bfdf);
+	disassemble = disassembler(bfd_get_arch(bfdf), bfd_little_endian(bfdf) ? FALSE : TRUE, 0, bfdf);
 	assert(disassemble);
 
 	do {

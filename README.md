@@ -21,7 +21,7 @@ To run these scripts you will need:
 
         $ sudo apt-get install python3-setuptools libpcap-dev \
                                libreadline-dev binutils-dev bison flex
-        $ sudo easy_install pcappy
+        $ pip install git+https://github.com/allfro/pcappy
 
  - Build the binary tools in `linux_tools` directory:
 

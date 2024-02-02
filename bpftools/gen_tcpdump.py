@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from __future__ import print_function
 import argparse
 import os
 import re
@@ -8,23 +9,37 @@ import sys
 
 from . import linktypes
 
-FAKE_PCAP="d4 c3 b2 a1 02 00 04 00  00 00 00 00 00 00 00 00  00 00 01 00 %02x 00 00 00".replace(' ','')
+FAKE_PCAP = "d4 c3 b2 a1 02 00 04 00  00 00 00 00 00 00 00 00  00 00 01 00 %02x 00 00 00".replace(
+    " ", ""
+)
 
 
 def bpf_from_expr(expr, linktype):
-    fake_pcap = (FAKE_PCAP % (linktype,)).decode('hex')
+    fake_pcap = bytes.fromhex(FAKE_PCAP % (linktype,)).decode("utf-8")
 
-    for path in ['/bin', '/sbin', '/usr/bin', '/usr/sbin', '/usr/local/bin', '/usr/local/sbin']:
-        tcpdump = os.path.join(path, 'tcpdump')
+    for path in [
+        "/bin",
+        "/sbin",
+        "/usr/bin",
+        "/usr/sbin",
+        "/usr/local/bin",
+        "/usr/local/sbin",
+    ]:
+        tcpdump = os.path.join(path, "tcpdump")
         if os.path.exists(tcpdump):
             break
     else:
         raise ValueError("Can't find tcpdump executable! run: apt-get install tcpdump")
 
-    if expr.strip().startswith('-'):
+    if expr.strip().startswith("-"):
         raise ValueError("")
 
-    p = subprocess.Popen([tcpdump, '-r-', '-d', expr], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(
+        [tcpdump, "-r-", "-d", expr],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     stdout, stderr = p.communicate(fake_pcap)
     if p.returncode != 0:
         raise ValueError("tcpdump exited with %d %r" % (p.returncode, stderr))
@@ -35,16 +50,15 @@ def gen(params, l3_off=0, ipversion=4, negate=False):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         prog="%s tcpdump --" % (sys.argv[0]),
-        description=r'''
+        description=r"""
 
 Generate bpf using tcpdump pcap compiler. Sadly for now it's done by
 shelling out to tcpdump.
 
-''')
-    parser.add_argument('expr', nargs='+',
-                        help='tcpdump expression')
+""",
+    )
+    parser.add_argument("expr", nargs="+", help="tcpdump expression")
     args = parser.parse_args(args=params)
-
 
     # map offset to linktype heuristics
     vlan = False
@@ -61,26 +75,29 @@ shelling out to tcpdump.
         vlan = True
         lt = linktypes.LINKTYPE_ETHERNET
     else:
-        assert False, 'l3_off of %d not supported' % (l3_off,)
+        assert False, "l3_off of %d not supported" % (l3_off,)
 
-    expr = ' '.join(args.expr)
+    expr = " ".join(args.expr)
     if negate:
         expr = "not (%s)" % (expr,)
     if vlan:
         expr = "vlan and (%s)" % (expr,)
 
     code = bpf_from_expr(expr, lt)
-    print "; ipver=%s" % (ipversion,)
-    print "; %s" % (expr,)
-    print
-    for line in code.split('\n'):
-        lno, _ , rest = line.partition(" ")
+    print("; ipver=%s" % (ipversion,))
+    print("; %s" % (expr,))
+    print()
+    for line in code.split("\n"):
+        lno, _, rest = line.partition(" ")
         rest = rest.replace("#pktlen", "#len")
         lno = int(lno[1:-1])
-        print "l%03d:" % (lno,)
+        print("l%03d:" % (lno,))
         m = re.match("^(?P<prefix>.*)\s+jt (?P<jt>\d+)\s+jf (?P<jf>\d+)$", rest)
         if m:
             d = m.groupdict()
-            print "    %s, l%03d, l%03d" % (d['prefix'].strip(), int(d['jt']), int(d['jf']))
+            print(
+                "    %s, l%03d, l%03d"
+                % (d["prefix"].strip(), int(d["jt"]), int(d["jf"]))
+            )
         else:
-            print "    %s" % (rest,)
+            print("    %s" % (rest,))

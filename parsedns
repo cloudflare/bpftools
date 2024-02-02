@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from __future__ import print_function
+from builtins import range
 import socket
 import struct
 import sys
@@ -8,12 +10,14 @@ import bpftools.utils
 
 
 def usage():
-    print """
+    print(
+        """
 parsedns.py [ hex string... ]
 
 Read the hex string as a network packet and parse it as it were a DNS
 request. Decode it and pretty print it.
 """.lstrip()
+    )
     sys.exit(2)
 
 
@@ -21,59 +25,62 @@ def unpack_domain(off, l5, rr=False):
     off1 = None
 
     while True:
-        c, = struct.unpack_from('!B', l5, off)
+        (c,) = struct.unpack_from("!B", l5, off)
         if c == 0x00:
-            print '.'
+            print(".")
             off += 1
             break
-        elif (c & 0xC0):
-            c, = struct.unpack_from('!H', l5, off)
-            ptr = c ^ 0xc000
+        elif c & 0xC0:
+            (c,) = struct.unpack_from("!H", l5, off)
+            ptr = c ^ 0xC000
             off += 2
-            print 'ptr->#%i'  % (ptr,),
+            print("ptr->#%i" % (ptr,), end=" ")
             if off1 == None:
                 off1 = off
             off = ptr
         else:
-            print '%r' % (l5[off+1:off+1+c],),
+            print("%r" % (l5[off + 1 : off + 1 + c],), end=" ")
             off += c + 1
 
     if off1:
         off = off1
 
-    qtype, qclass = struct.unpack_from('!HH', l5, off)
+    qtype, qclass = struct.unpack_from("!HH", l5, off)
     off += 4
-    print '                    type=0x%04x class=0x%04x'  % (qtype, qclass)
+    print("                    type=0x%04x class=0x%04x" % (qtype, qclass))
     if not rr:
         return off
-    ttl, rlength = struct.unpack_from('!IH', l5, off)
+    ttl, rlength = struct.unpack_from("!IH", l5, off)
     off += 6
-    xxx = l5[off:off+rlength]
-    print '                    ttl=%i rrlen=%i: %s' % (ttl, rlength, xxx.encode('hex'))
+    xxx = l5[off : off + rlength]
+    print("                    ttl=%i rrlen=%i: %s" % (ttl, rlength, xxx.encode("utf-8").hex()))
     if qtype == 0x0029:
-        print " "*23, "bufsize=%i" % (qclass)
-        if ttl & (1<<15):
-             print " "*23, "dnssec_ok_flag"
+        print(" " * 23, "bufsize=%i" % (qclass))
+        if ttl & (1 << 15):
+            print(" " * 23, "dnssec_ok_flag")
         edns_ver = (ttl >> 16) & 0xFF
         if edns_ver:
-            print " "*23, "ends_version=%i (INVALID!)" % edns_ver
+            print(" " * 23, "ends_version=%i (INVALID!)" % edns_ver)
         if ttl & (0xFF007FFF):
-            print " "*23, "extra edns flags %08x" % ttl
+            print(" " * 23, "extra edns flags %08x" % ttl)
 
         while xxx:
-            code, optlen = struct.unpack_from('!HH', xxx)
-            xxy, xxx = xxx[4:4+optlen], xxx[4+optlen:]
-            if code == 0x50fa:
-                family, mask, scope = struct.unpack_from('!HBB', xxy)
+            code, optlen = struct.unpack_from("!HH", xxx)
+            xxy, xxx = xxx[4 : 4 + optlen], xxx[4 + optlen :]
+            if code == 0x50FA:
+                family, mask, scope = struct.unpack_from("!HBB", xxy)
                 if family == 1:
                     ip = socket.inet_ntoa(xxy[4:])
                 else:
-                    ip = xxy[4:].encode('hex')
-                print " "*23, "family=%i mask=%i scope=%i %s" % (family, mask, scope, ip)
+                    ip = xxy[4:].encode("utf-8").hex()
+                print(
+                    " " * 23,
+                    "family=%i mask=%i scope=%i %s" % (family, mask, scope, ip),
+                )
             elif code == 3 and len(xxy) == 0:
-                print " "*23, "nsid request"
+                print(" " * 23, "nsid request")
             else:
-                print " "*23, "code=%04x data=%s" % (code, xxy.encode('hex'))
+                print(" " * 23, "code=%04x data=%s" % (code, xxy.encode("utf-8").hex()))
 
     off += rlength
     return off
@@ -85,94 +92,127 @@ def parsedns(raw):
     assert l2len is not None
     l2, l3 = raw[:l2len], raw[l2len:]
 
-    print '[.] l2: %s' % l2.encode('hex')
+    print("[.] l2: %s" % str(l2).encode("utf-8").hex())
 
-    v_len, = struct.unpack_from('!B', l3)
-    if v_len & 0xf0 == 0x40:
+    (v_len,) = struct.unpack_from("!B", l3)
+    if v_len & 0xF0 == 0x40:
         l3len = (v_len & 0x0F) * 4
         l3, l4 = l3[:l3len], l3[l3len:]
-        print '[.] l3: %s' % l3.encode('hex')
+        print("[.] l3: %s" % str(l3).encode("utf-8").hex())
 
-        v_len, dscp_ecn, total_length, ip_id, fragment, ttl, protocol, _checksum, sip, dip = struct.unpack_from('!BBHHHBBHII', l3)
+        (
+            v_len,
+            dscp_ecn,
+            total_length,
+            ip_id,
+            fragment,
+            ttl,
+            protocol,
+            _checksum,
+            sip,
+            dip,
+        ) = struct.unpack_from("!BBHHHBBHII", l3)
         ip_extra = l3[20:]
 
-        print '              ver: 0x%02x' % ((v_len & 0xf0) >> 4,)
-        print '              hdl: 0x%02x' % ((v_len & 0x0f),)
-        print '            ip_id: 0x%04x' % (ip_id,)
-        print '         fragment: 0x%04x' % (fragment,)
-        print '              ttl: 0x%02x (%d)' % (ttl, ttl)
-        print '         protocol: 0x%02x' % (protocol,)
-        print '           source: 0x%s %s' % (l3[12:16].encode('hex'), socket.inet_ntoa(l3[12:16]))
-        print '      destination: 0x%s %s' % (l3[16:20].encode('hex'), socket.inet_ntoa(l3[16:20]))
+        print("              ver: 0x%02x" % ((v_len & 0xF0) >> 4,))
+        print("              hdl: 0x%02x" % ((v_len & 0x0F),))
+        print("            ip_id: 0x%04x" % (ip_id,))
+        print("         fragment: 0x%04x" % (fragment,))
+        print("              ttl: 0x%02x (%d)" % (ttl, ttl))
+        print("         protocol: 0x%02x" % (protocol,))
+        print(
+            "           source: 0x%s %s"
+            % (str(l3[12:16]).encode("utf-8").hex(), socket.inet_ntoa(l3[12:16]))
+        )
+        print(
+            "      destination: 0x%s %s"
+            % (str(l3[16:20]).encode("utf-8").hex(), socket.inet_ntoa(l3[16:20]))
+        )
         if ip_extra:
-            print '         ip_extra: %s' % (ip_extra.encode('hex'),)
-    elif v_len & 0xf0 == 0x60:
+            print("         ip_extra: %s" % (str(ip_extra).encode("utf-8").hex(),))
+    elif v_len & 0xF0 == 0x60:
         l3len = 40
         l3, l4 = l3[:l3len], l3[l3len:]
-        print '[.] l3: %s' % l3.encode('hex')
+        print("[.] l3: %s" % str(l3).encode("utf-8").hex())
 
-        v_ttl, _class, _flow, payload_length, next_header, ttl = struct.unpack_from('!BBHHBB', l3)
-        print '              ver: 0x%02x' % ((v_len & 0xf0) >> 4,)
-        print '   payload_length: 0x%04x' % (payload_length,)
-        print '      next_header: 0x%02x' % (next_header,)
-        print '              ttl: 0x%02x' % (ttl,)
-        print '           source: %s' % (l3[8:24].encode('hex'),)
-        print '      destination: %s' % (l3[24:40].encode('hex'),)
+        v_ttl, _class, _flow, payload_length, next_header, ttl = struct.unpack_from(
+            "!BBHHBB", l3
+        )
+        print("              ver: 0x%02x" % ((v_len & 0xF0) >> 4,))
+        print("   payload_length: 0x%04x" % (payload_length,))
+        print("      next_header: 0x%02x" % (next_header,))
+        print("              ttl: 0x%02x" % (ttl,))
+        print("           source: %s" % (str(l3[8:24]).encode("utf-8").hex(),))
+        print("      destination: %s" % (str(l3[24:40]).encode("utf-8").hex(),))
     else:
         assert False
 
     l4, l5 = l4[:8], l4[8:]
 
-    print '[.] l4: %s' % l4.encode('hex')
+    print("[.] l4: %s" % str(l4).encode("utf-8").hex())
 
-    spt, dpt, l4len, _checksum = struct.unpack_from('!HHHH', l4)
+    spt, dpt, l4len, _checksum = struct.unpack_from("!HHHH", l4)
 
-    print '      source port: 0x%04x (%s)' % (spt, spt)
-    print ' destination port: %s' % (dpt,)
-    print '           length: %s' % (l4len,)
+    print("      source port: 0x%04x (%s)" % (spt, spt))
+    print(" destination port: %s" % (dpt,))
+    print("           length: %s" % (l4len,))
 
-    print '[.] l5: %s' % l5.encode('hex')
+    print("[.] l5: %s" % str(l5).encode("utf-8").hex())
 
-    dns_id, flags, qdcnt, anscnt, authcnt, extracnt = struct.unpack_from('!HHHHHH', l5)
+    dns_id, flags, qdcnt, anscnt, authcnt, extracnt = struct.unpack_from("!HHHHHH", l5)
 
-    print '               id: 0x%04x' % (dns_id,)
-    print '            flags: 0x%04x' % (flags,),
+    print("               id: 0x%04x" % (dns_id,))
+    print("            flags: 0x%04x" % (flags,), end=" ")
     f = []
-    f.append('response' if flags & (1<<15) else 'query')
-    if flags & (1<<10):
-        f.append('authoritative')
-    if flags & (1<<9):
-        f.append('truncated')
-    if flags & (1<<8):
-        f.append('recursion_desired')
-    if flags & (1<<7):
-        f.append('recursion_available')
-    if flags & (1<<6):
-        f.append('z')
-    if flags & (1<<5):
-        f.append('authenticated_data')
-    if flags & (1<<4):
-        f.append('checking_disabled')
-    f.append( 'op=%x' % ((flags>>11) & 0xF))
-    f.append( 'rcode=%x' % ((flags) & 0xF))
-    print ' '.join(f)
-    print '        questions: %s' % (qdcnt,)
-    print '          answers: %s' % (anscnt,)
-    print '             auth: %s' % (authcnt,)
-    print '            extra: %s' % (extracnt,)
+    f.append("response" if flags & (1 << 15) else "query")
+    if flags & (1 << 10):
+        f.append("authoritative")
+    if flags & (1 << 9):
+        f.append("truncated")
+    if flags & (1 << 8):
+        f.append("recursion_desired")
+    if flags & (1 << 7):
+        f.append("recursion_available")
+    if flags & (1 << 6):
+        f.append("z")
+    if flags & (1 << 5):
+        f.append("authenticated_data")
+    if flags & (1 << 4):
+        f.append("checking_disabled")
+    f.append("op=%x" % ((flags >> 11) & 0xF))
+    f.append("rcode=%x" % ((flags) & 0xF))
+    print(" ".join(f))
+    print("        questions: %s" % (qdcnt,))
+    print("          answers: %s" % (anscnt,))
+    print("             auth: %s" % (authcnt,))
+    print("            extra: %s" % (extracnt,))
 
     off = 12
-    for i in xrange(qdcnt):
-        print '#%3i         q[%i]:' % (off-len(l5), i,),
+    for i in range(qdcnt):
+        print(
+            "#%3i         q[%i]:"
+            % (
+                off - len(l5),
+                i,
+            ),
+            end=" ",
+        )
         off = unpack_domain(off, l5)
 
-    for cnt, n in (anscnt, 'answer'), (authcnt, 'auth'), (extracnt, 'extra'):
-        for i in xrange(cnt):
-            print '%14s[%i]:' % (n, i, ),
+    for cnt, n in (anscnt, "answer"), (authcnt, "auth"), (extracnt, "extra"):
+        for i in range(cnt):
+            print(
+                "%14s[%i]:"
+                % (
+                    n,
+                    i,
+                ),
+                end=" ",
+            )
             off = unpack_domain(off, l5, rr=True)
 
     if len(l5) > off:
-        print '  trailing: %s' % (l5[off:].encode('hex'),)
+        print("  trailing: %s" % (str(l5[off:]).encode("utf-8").hex(),))
 
 
 if __name__ == "__main__":
@@ -180,5 +220,5 @@ if __name__ == "__main__":
         usage()
 
     for hexstr in sys.argv[1:]:
-        parsedns(hexstr.decode('hex'))
-        print
+        parsedns(bytes.fromhex(hexstr))
+        print()

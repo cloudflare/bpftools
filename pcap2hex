@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from __future__ import print_function
+from builtins import str
 import getopt
 import os
 import sys
@@ -11,7 +13,8 @@ import bpftools.utils
 
 
 def usage():
-    print """
+    print(
+        """
 pcap2hex.py [ OPTIONS ] [ pcap file... ]
 
 Read pcap from stdin or given pcap files and print hex-encoded
@@ -28,6 +31,7 @@ Options are:
                      14 bytes (from DLT_LINUX_SLL to DLT_EN10MB)
   -a, --ascii        print printable asci characters
 """.lstrip()
+    )
     sys.exit(2)
 
 
@@ -36,10 +40,11 @@ def main():
     normalize = True
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hsna",
-                                   ["help", "scrub", "no-normalize", "ascii"])
+        opts, args = getopt.getopt(
+            sys.argv[1:], "hsna", ["help", "scrub", "no-normalize", "ascii"]
+        )
     except getopt.GetoptError as err:
-        print str(err)
+        print(str(err))
         usage()
 
     for o, a in opts:
@@ -57,7 +62,7 @@ def main():
     if not args:
         readfds = [sys.stdin]
     else:
-        readfds = [open(fname, 'rb') for fname in args]
+        readfds = [open(fname, "rb") for fname in args]
 
     for fd in readfds:
         p = pcappy.open_offline(fd)
@@ -90,14 +95,19 @@ def main():
             if normalize and l3_off in (18,):
                 data = data[0:12] + data[16:]
 
-            h = data.encode('hex')
+            h = data.encode("utf-8").hex()
             if not ascii:
-                print h
+                print(h)
             else:
-                s = ''.join([c if (c in string.printable and
-                                   c not in string.whitespace) else '.'
-                             for c in data])
-                print "%s\t%s" % (h, s)
+                s = "".join(
+                    [
+                        c
+                        if (c in string.printable and c not in string.whitespace)
+                        else "."
+                        for c in data
+                    ]
+                )
+                print("%s\t%s" % (h, s))
 
     sys.stdout.flush()
 
@@ -108,7 +118,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except IOError, e:
+    except IOError as e:
         if e.errno == 32:
             os._exit(-1)
         raise

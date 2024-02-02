@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-import StringIO as stringio
+from __future__ import print_function
+from future import standard_library
+
+standard_library.install_aliases()
+import io as stringio
 import os
 import sys
 
@@ -12,29 +16,31 @@ from . import utils
 from . import gen_tcpdump
 
 name_to_gen = {
-    'dns': gen_dns.gen,
-    'dns_validate': gen_dns_validate.gen,
-    'p0f': gen_p0f.gen,
-    'suffix': gen_suffix.gen,
-    'tcpdump': gen_tcpdump.gen,
-    }
+    "dns": gen_dns.gen,
+    "dns_validate": gen_dns_validate.gen,
+    "p0f": gen_p0f.gen,
+    "suffix": gen_suffix.gen,
+    "tcpdump": gen_tcpdump.gen,
+}
 
-generator_names = name_to_gen.keys()
+generator_names = list(name_to_gen.keys())
 
 
 def gen(typename, params, **kwargs):
     gentype = name_to_gen[typename]
 
-    assembly = kwargs.get('assembly', False)
-    del kwargs['assembly']
+    assembly = kwargs.get("assembly", False)
+    del kwargs["assembly"]
 
     sys.stdout, saved_stdout = stringio.StringIO(), sys.stdout
+
     def new_exit(s):
         sys.stdout.seek(0)
         data = sys.stdout.read()
         sys.stdout = saved_stdout
-        print data
+        print(data)
         os._exit(s)
+
     sys.exit, saved_exit = new_exit, sys.exit
 
     name = gentype(params, **kwargs)

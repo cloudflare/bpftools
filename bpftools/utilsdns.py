@@ -3,7 +3,11 @@
 import struct
 
 
-_dns_type = map(lambda (a,b): (a, int(b)), map(lambda line: line.split(), '''
+_dns_type = [
+    (a_b[0], int(a_b[1]))
+    for a_b in [
+        line.split()
+        for line in """
 A          1
 NS         2
 MD         3
@@ -80,22 +84,34 @@ URI        256
 CAA        257
 TA         32768
 DLV        32769
-'''.strip().split('\n')))
+""".strip().split(
+            "\n"
+        )
+    ]
+]
 
-qtype2str = dict( (v, n) for n, v in _dns_type)
-str2qtype = dict( (n, v) for n, v in _dns_type)
+qtype2str = dict((v, n) for n, v in _dns_type)
+str2qtype = dict((n, v) for n, v in _dns_type)
 
-_dns_class = map(lambda (a,b): (a, int(b)), map(lambda line: line.split(), '''
+_dns_class = [
+    (a_b1[0], int(a_b1[1]))
+    for a_b1 in [
+        line.split()
+        for line in """
 INET   1
 CSNET  2
 CHAOS  3
 HESIOD 4
 NONE   254
 ANY    255
-'''.strip().split('\n')))
+""".strip().split(
+            "\n"
+        )
+    ]
+]
 
-qclass2str = dict( (v, n) for n, v in _dns_class)
-str2qclass = dict( (n, v) for n, v in _dns_class)
+qclass2str = dict((v, n) for n, v in _dns_class)
+str2qclass = dict((n, v) for n, v in _dns_class)
 
 
 def unpack_domain(data, off):
@@ -103,20 +119,20 @@ def unpack_domain(data, off):
 
     parts = []
     while True:
-        c, = struct.unpack_from('!B', data, off)
+        (c,) = struct.unpack_from("!B", data, off)
         if c == 0x00:
             off += 1
             break
-        elif (c & 0xC0):
-            c, = struct.unpack_from('!H', data, off)
-            ptr = c ^ 0xc000
+        elif c & 0xC0:
+            (c,) = struct.unpack_from("!H", data, off)
+            ptr = c ^ 0xC000
             off += 2
             if off1 == None:
                 off1 = off
             off = ptr
         else:
-            parts.append( data[off+1:off+1+c] )
+            parts.append(data[off + 1 : off + 1 + c])
             off += c + 1
 
-    qtype, qclass = struct.unpack_from('!HH', data, off)
-    return '.'.join(parts), qtype, qclass
+    qtype, qclass = struct.unpack_from("!HH", data, off)
+    return ".".join(parts), qtype, qclass
