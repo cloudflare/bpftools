@@ -3,7 +3,7 @@ import math
 
 ip = {
     'hl':   '(ip[0] & 0xf)',
-    'ecn':  '(ip[1] & 0x2)',
+    'ecn':  '(ip[1] & 0x2) | (tcp[tcpflags] & 0xc0)',
     'tl':   'ip[2:2]',
     'ipid': 'ip[4:2]',
     'df':   '(ip[6] & 0x40)',
