@@ -28,7 +28,7 @@ set -o pipefail
 : ${IPTABLES:="%(iptables)s"}
 : ${IPSET:="ipset"}
 : ${INPUTPLACE:="1"}
-: ${DEFAULTINT:=`awk 'BEGIN {n=0} $2 == "00000000" {n=1; print $1; exit} END {if (n=0) {print "eth0"}}' /proc/net/route`}
+: ${DEFAULTINT:=`awk 'BEGIN {n=0} $2 == "00000000" {n=1; print $1; exit} END {if (n==0) {print "eth0"}}' /proc/net/route`}
 
 main_match () {
     ${IPTABLES} \
